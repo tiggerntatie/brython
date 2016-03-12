@@ -1281,7 +1281,7 @@ function $CallCtx(context){
                 args_str += '_b_.list('+star_args+'))'
             }
 
-            if(this.func.value=="fghjk"){
+            if(true){ //this.func.value=="fghjk"){
                 console.log('fghjk')
                 var kw_args_str = '{'+kw_args.join(', ')+'}'
                 if(dstar_args){
@@ -2052,130 +2052,31 @@ function $DefCtx(context){
 
         this.env = []
     
-        // Code in the worst case, uses $B.args in py_utils.js
-
         var make_args_nodes = []
         var func_ref = '$locals_'+scope.id.replace(/\./g,'_')+'["'+this.name+'"]'
-        if(this.name=='fghjk'){
-            var js = 'var $ns = $B.argsfast("'+this.name+'", '
-        }else{
-            var js = 'var $ns = $B.args("'+this.name+'", '
-        }
-        js += this.argcount+', {'+this.slots.join(', ')+'}, '
-        js += '['+slot_list.join(', ')+'], '
-        if(this.name=='fghjk'){
-            js += 'pos_args, kw_args, '
-        }else{
-            js += 'arguments, '
-        }
+        var js = 'var $ns = $B.argsfast("'+this.name+'", '+
+            this.argcount+', {'+this.slots.join(', ')+'}, '+
+            '['+slot_list.join(', ')+'], pos_args, kw_args, '
         if(defs1.length){js += '$defaults, '}
         else{js += '{}, '}
         js += this.other_args+', '+this.other_kw+');'
 
         var new_node = new $Node()
         new $NodeJSCtx(new_node,js)
-        make_args_nodes.push(new_node)
+        nodes.push(new_node)
 
         var new_node = new $Node()
         new $NodeJSCtx(new_node,'for(var $var in $ns){$locals[$var]=$ns[$var]};')
-        make_args_nodes.push(new_node)
+        nodes.push(new_node)
         
-        var only_positional = false
-        if(defaults.length==0 && this.other_args===null && this.other_kw===null &&
-            this.after_star.length==0){
-            // If function only takes positional arguments, we can generate
-            // a faster version of argument parsing than by calling function
-            // $B.args
-            only_positional = true
-            var pos_nodes = []
-            
-            if($B.debug>0 || this.positional_list.length>0){
-
-                // Test if all the arguments passed to the function
-                // are positional, not keyword arguments
-                // In calls, keyword arguments are passed as the last
-                // argument, an object with attribute $nat set to "kw"
-                
-                var new_node = new $Node()
-                var js = 'if(arguments.length>0 && arguments[arguments.length-1].$nat)'
-                new $NodeJSCtx(new_node,js)
-                nodes.push(new_node)
-                
-                // If at least one argument is not "simple", fall back to 
-                // $B.args()
-                new_node.add(make_args_nodes[0])
-                new_node.add(make_args_nodes[1])
-            
-                var else_node = new $Node()
-                new $NodeJSCtx(else_node,'else')
-                nodes.push(else_node)
-            }
-            
-            if($B.debug>0){
-                // If all arguments are "simple" all there is to check is that
-                // we got the right number of arguments
-                var pos_len = this.positional_list.length
-
-                js = 'if(arguments.length!='+pos_len+')'
-                var wrong_nb_node = new $Node()
-                new $NodeJSCtx(wrong_nb_node,js)
-                else_node.add(wrong_nb_node)
-                
-                if(pos_len>0){
-                    // Test if missing arguments
-                    
-                    js = 'if(arguments.length<'+pos_len+')'
-                    js += '{var $missing='+pos_len+'-arguments.length;'
-                    js += 'throw TypeError("'+this.name+'() missing "+$missing+'
-                    js += '" positional argument"+($missing>1 ? "s" : "")+": "'
-                    js += '+new Array('+positional_str+').slice(arguments.length))}'
-                    new_node = new $Node()
-                    new $NodeJSCtx(new_node,js)
-                    wrong_nb_node.add(new_node)
-                
-                    js = 'else if'
-                }else{
-                    js = 'if'
-                }
-    
-                // Test if too many arguments
-                js += '(arguments.length>'+pos_len+')'
-                js += '{throw TypeError("'+this.name+'() takes '+pos_len
-                js += ' positional argument'
-                js += (pos_len>1 ? "s" : "")
-                js += ' but more were given")}'
-                new_node = new $Node()
-                new $NodeJSCtx(new_node,js)
-                wrong_nb_node.add(new_node)
-            }
-            
-            for(var i=0;i<this.positional_list.length;i++){
-                var arg = this.positional_list[i]
-                var new_node = new $Node()
-                var js = '$locals["'+arg+'"]=('+arg+
-                    '.is_float ? _b_.float('+arg+'.value) : '+arg+')'
-                js = '$locals["'+arg+'"]='+arg
-                new $NodeJSCtx(new_node,js)
-                else_node.add(new_node)
-            }
-
-        }else{
-            nodes.push(make_args_nodes[0])
-            nodes.push(make_args_nodes[1])
-        }
-
         for(var i=nodes.length-1;i>=0;i--){
             node.children.splice(0,0,nodes[i])
         }
 
         // Node that replaces the original "def" line
         var def_func_node = new $Node()
-        if(only_positional){
-            var params = Object.keys(this.varnames).concat(['$extra']).join(', ')
-            new $NodeJSCtx(def_func_node,'return function('+params+')')
-        }else{
-            new $NodeJSCtx(def_func_node,'return function(pos_args, kw_args)')
-        }
+        new $NodeJSCtx(def_func_node,'return function(pos_args, kw_args)')
+
         def_func_node.is_def_func = true
         def_func_node.module = this.module
 
@@ -2360,7 +2261,7 @@ function $DefCtx(context){
             finally_node.add($NodeJS('$B.leave_frame($local_name)'))
             
             parent.add(finally_node)
-        }        
+        }
 
         this.transformed = true
         
@@ -3374,6 +3275,7 @@ function $IdCtx(context,value){
                     }else{
                         // Keep the name as is, it is introduced in the 
                         // namespace at the beginning of the script
+                        val = '$B.wrap_builtin('+val+')'
                         this.is_builtin = true
                     }
                 }else if(scope.id==scope.module){

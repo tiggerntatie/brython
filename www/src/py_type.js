@@ -163,14 +163,10 @@ $B.make_method = function(attr, klass, func, func1){
         // the attribute is a function : return an instance method,
         // called with the instance as first argument
         method = function(instance){
-            var instance_method = function(){
-                var local_args = [instance]
-                var pos=local_args.length
-                for(var i=0, _len_i = arguments.length; i < _len_i;i++){
-                    local_args[pos++]=arguments[i]
-                }
-                var f = _b_.getattr(func, '__get__', func)
-                return f.apply(null,local_args)
+            var instance_method = function(p, k){
+                var local_args = [instance].concat(p),
+                    f = _b_.getattr(func, '__get__', func)
+                return f(local_args, k)
             }
             instance_method.__class__ = $B.$MethodDict
             instance_method.$infos = {
@@ -189,14 +185,10 @@ $B.make_method = function(attr, klass, func, func1){
         return func
       case 'classmethod':
         // class method : called with the class as first argument
-        method = function(){
+        method = function(p, k){
             var class_method = function(){
-                var local_args = [klass]
-                var pos=local_args.length
-                for(var i=0, _len_i = arguments.length; i < _len_i;i++){
-                    local_args[pos++]=arguments[i]
-                }
-                return func.apply(null,local_args)
+                var local_args = [klass].concat(p)
+                return func(local_args, k)
             }
             class_method.__class__ = $B.$MethodDict
             class_method.$infos = {
@@ -577,15 +569,15 @@ function $instance_creator(klass){
     if(simple && klass.__new__==undefined && init_func!==null){
         // most usual case
         
-        return function(){
+        return function(p, k){
             var obj = {__class__:klass}
-            init_func.apply(null,[obj].concat(Array.prototype.slice.call(arguments)))
+            init_func([obj].concat(p), k)
             return obj
         }
 
     }
 
-    return function(){
+    return function(p, k){
         var obj
         var _args = Array.prototype.slice.call(arguments)
         
@@ -594,13 +586,13 @@ function $instance_creator(klass){
             obj = {__class__:klass}
         }else{
             if(new_func!==null){
-                obj = new_func.apply(null,[klass.$factory].concat(_args))
+                obj = new_func([klass.$factory].concat(p), k)
             }
         }
         // __initialized__ is set in object.__new__ if klass has a method __init__
         if(!obj.__initialized__){
             if(init_func!==null){
-                init_func.apply(null,[obj].concat(_args))
+                init_func([obj].concat(p), k)
             }
         }
         return obj

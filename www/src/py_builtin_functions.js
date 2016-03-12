@@ -1816,4 +1816,20 @@ _b_['open']=$url_open
 _b_['print']=$print
 _b_['$$super']=$$super
 
+$B.wrap_builtin = function(bltin){
+    // built-in objects in Python code are converted to _b_.$wrap(obj)
+    // if obj is a function, the arguments (p,k) received by _b_.$wrap(obj)
+    // are converted before applying obj
+    if(typeof bltin == 'function'){
+        return function(p, k){
+            if(k!==undefined){
+                p.push({$nat:'kw', kw: k})
+            }
+            return bltin.apply(null, p)
+        }
+    }else{
+        return bltin
+    }
+}
+
 })(__BRYTHON__)
