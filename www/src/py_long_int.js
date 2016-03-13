@@ -32,7 +32,7 @@ function add_pos(v1, v2){
 
 function check_shift(shift){
     // Check the argument of >> and <<
-    if(!isinstance(shift, LongInt)){
+    if(!isinstance([shift, LongInt])){
         throw TypeError("shift must be int, not '"+
             $B.get_class(shift).__name__+"'")
     }
@@ -234,7 +234,7 @@ $LongIntDict.__abs__ = function(self){
 
 $LongIntDict.__add__ = function(self, other){
 
-    if(isinstance(other, _b_.float)){
+    if(isinstance([other, _b_.float])){
         return _b_.float(parseInt(self.value)+other.value)
     }
     if (typeof other == 'number') other=LongInt(_b_.str(other))
@@ -324,7 +324,7 @@ $LongIntDict.__float__ = function(self){
 }
 
 $LongIntDict.__floordiv__ = function(self, other){
-    if(isinstance(other, _b_.float)){
+    if(isinstance([other, _b_.float])){
         return _b_.float(parseInt(self.value)/other)
     }
     if (typeof other == 'number') other=LongInt(_b_.str(other))
@@ -421,7 +421,7 @@ $LongIntDict.__mul__ = function(self, other){
     switch(self){
         case Number.NEGATIVE_INFINITY:
         case Number.POSITIVE_INFINITY:
-            var eq = _b_.getattr(other, '__eq__')
+            var eq = _b_.getattr([other, '__eq__'])
             if(eq(0)){return NaN} // infinity * 0 = NaN
             else if(_b_.getattr(other, '__gt__')(0)){return self}
             else{return -self}
@@ -499,11 +499,13 @@ $LongIntDict.__str__ = $LongIntDict.__repr__ = function(self){
     return res+self.value
 }
 
-$LongIntDict.__sub__ = function(self, other){
-    if(isinstance(other, _b_.float)){
+$LongIntDict.__sub__ = function(p, k){
+    var $ =$B.argsfast2('__sub__', p, k),self = $.x, other = $.y
+
+    if(isinstance([other, _b_.float])){
         return _b_.float(parseInt(self.value)-other.value)
     }
-    if (typeof other == 'number') other=LongInt(_b_.str(other))
+    if (typeof other == 'number') other=LongInt(_b_.str([other]))
     var res
     if(self.pos && other.pos){
         switch(comp_pos(self.value, other.value)){
@@ -626,7 +628,7 @@ function LongInt(value, base){
     }
     // base defaults to 10
     if(base===undefined){base = 10}
-    else if(!isinstance(base, int)){
+    else if(!isinstance([base, int])){
         throw TypeError("'"+$B.get_class(base).__name__+"' object cannot be interpreted as an integer")
     }
     if(base<0 || base==1 || base>36){
