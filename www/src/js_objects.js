@@ -38,13 +38,14 @@ $Location.$dict = $LocationDict
 
 var $JSConstructorDict = {__class__:$B.$type,__name__:'JSConstructor'}
 
-$JSConstructorDict.__call__ = function(self){
+$JSConstructorDict.__call__ = function(p, k){
     // self.js is a constructor
     // It takes Javascript arguments so we must convert
     // those passed to the Python function
+    var self = p[0]
     var args = [null]
-    for(var i=1, _len_i = arguments.length; i < _len_i;i++){
-        args.push(pyobj2jsobj(arguments[i]))
+    for(var i=1, _len_i = p.length; i < _len_i;i++){
+        args.push(pyobj2jsobj(p[i]))
     }
     var factory = self.func.bind.apply(self.func, args)
     var res = new factory()
@@ -54,10 +55,10 @@ $JSConstructorDict.__call__ = function(self){
 
 $JSConstructorDict.__mro__ = [$JSConstructorDict,$ObjectDict]
 
-function JSConstructor(obj){
+function JSConstructor(p, k){
     return {
         __class__:$JSConstructorDict,
-        func:obj.js_func
+        func:p[0].js_func
     }
 }
 JSConstructor.__class__ = $B.$factory

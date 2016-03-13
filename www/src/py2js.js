@@ -1281,96 +1281,17 @@ function $CallCtx(context){
                 args_str += '_b_.list('+star_args+'))'
             }
 
-            if(true){ //this.func.value=="fghjk"){
-                console.log('fghjk')
-                var kw_args_str = '{'+kw_args.join(', ')+'}'
-                if(dstar_args){
-                    kw_args_str = '$B.extend("'+this.func.value+'",'+kw_args_str
-                    kw_args_str += ','+dstar_args+')'
-                }else if(kw_args_str=='{}'){
-                    kw_args_str = ''
-                }
-                var res = 'getattr('+func_js+',"__call__")(['+args_str+']'
-                if(kw_args_str.length>0){res += ', '+kw_args_str}
-                return res + ')'
-            }        
-
             var kw_args_str = '{'+kw_args.join(', ')+'}'
             if(dstar_args){
-                kw_args_str = '{$nat:"kw",kw:$B.extend("'+this.func.value+'",'+kw_args_str
-                kw_args_str += ','+dstar_args+')}'
-            }else if(kw_args_str!=='{}'){
-                kw_args_str = '{$nat:"kw",kw:'+kw_args_str+'}'
-            }else{
+                kw_args_str = '$B.extend("'+this.func.value+'",'+kw_args_str
+                kw_args_str += ','+dstar_args+')'
+            }else if(kw_args_str=='{}'){
                 kw_args_str = ''
             }
+            var res = 'getattr('+func_js+',"__call__")(['+args_str+']'
+            if(kw_args_str.length>0){res += ', '+kw_args_str}
+            return res + ')'
 
-
-
-            if(star_args && kw_args_str){
-                args_str += '.concat(['+kw_args_str+'])'            
-            }else{
-                if(args_str && kw_args_str){args_str += ','+kw_args_str}
-                else if(!args_str){args_str=kw_args_str}
-            }
-            
-            if(star_args){
-                    // If there are star args, we use an internal function
-                    // $B.extend_list to produce the list of positional
-                    // arguments. In this case the function must be called
-                    // with apply
-                    args_str = '.apply(null,'+args_str+')'
-            }else{
-                args_str = '('+args_str+')'
-            }
-
-            if($B.debug>0){
-                // On debug mode, always use getattr(func,"__call__") to manage
-                // the call stack and get correct error messages
-
-                // somehow we need to loop up through the context parents
-                // until we reach the root, or until we reach a node
-                // that has not been processed yet (js_processed=false)
-                // we then do a to_js (setting each js_processed to true)
-                // from this node until we reach the current node being processed. 
-                // Take output from to_js and append to execution_object.
-                
-                var res=""
-                if (_block) {
-                   //earney
-                   res="@@;$B.execution_object.$append($jscode, 10); "
-                   res+="$B.execution_object.$execute_next_segment(); "
-                   res+="$jscode=@@"
-                }
-                
-                res += 'getattr('+func_js+',"__call__")'
-                return res+args_str
-            }
-
-            if(this.tree.length>-1){
-              if(this.func.type=='id'){
-                  if(this.func.is_builtin){
-                      // simplify code for built-in functions
-                      if($B.builtin_funcs[this.func.value]!==undefined){
-                          return func_js+args_str
-                      }
-                  }else{
-                      var bound_obj = this.func.found
-                      if(bound_obj && (bound_obj.type=='class' ||
-                        bound_obj.type=='def')){
-                          return func_js+args_str
-                      }
-                  }
-                  var res = '('+func_js+'.$is_func ? '
-                  res += func_js+' : '
-                  res += 'getattr('+func_js+',"__call__"))'+args_str
-              }else{
-                  var res = 'getattr('+func_js+',"__call__")'+args_str
-              }
-              return res
-            }
-
-            return 'getattr('+func_js+',"__call__")()'
         }
     }
 }
@@ -1763,8 +1684,8 @@ function $DecoratorCtx(context){
 
         for(var i=0;i<decorators.length;i++){
           //var dec = this.dec_ids[i]
-          res += this.dec_ids[i]+'('
-          tail +=')'
+          res += this.dec_ids[i]+'(['
+          tail +='])'
         }
         res += (obj.decorated ? obj.alias : ref)+tail+';'
         
