@@ -502,7 +502,7 @@ $LongIntDict.__str__ = $LongIntDict.__repr__ = function(self){
 $LongIntDict.__sub__ = function(p, k){
     var $ =$B.argsfast2('__sub__', p, k),self = $.x, other = $.y
 
-    if(isinstance([other, _b_.float])){
+    if(isinstance(other, _b_.float)){
         return _b_.float(parseInt(self.value)-other.value)
     }
     if (typeof other == 'number') other=LongInt(_b_.str([other]))

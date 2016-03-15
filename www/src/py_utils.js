@@ -162,6 +162,20 @@ $B.argsfast = function($fname, argcount, slots, var_names, pos_args, kw_args,
     return slots
 }
 
+$B.argsfast1 = function(name, p, k){
+    // Shortcut for function with 1 positional argument
+    // Returns {a: <value>}
+    return $B.argsfast(name, 1, {x:null},
+        ['x'], p, k, {},null, null)
+}
+
+$B.argsfast2 = function(name, p, k){
+    // Shortcut for function with 2 positional arguments
+    // Returns {a: <value1>, b: <value2>}
+    return $B.argsfast(name, 2, {x:null, y:null},
+        ['x', 'y'], p, k, {},null, null)
+}
+
 $B.get_class = function(obj){
     // generally we get the attribute __class__ of an object by obj.__class__
     // but Javascript builtins used by Brython (functions, numbers, strings...)
