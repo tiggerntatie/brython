@@ -539,12 +539,10 @@ function getattr(obj,attr,_default){
         }
         if(typeof klass[attr]=='function'){
             // new is a static method
-            if(attr=='__new__') return klass[attr].apply(null,arguments)
+            if(attr=='__new__') return klass[attr](arguments)
             
-            var method = function(){
-                var args = [obj], pos=1
-                for(var i=0;i<arguments.length;i++){args[pos++]=arguments[i]}
-                return klass[attr].apply(null,args)
+            var method = function(p, k){
+                return klass[attr]([obj].concat(p), k)
             }
             method.__class__ = $B.$MethodDict
             method.$infos = {

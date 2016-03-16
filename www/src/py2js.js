@@ -1975,8 +1975,10 @@ function $DefCtx(context){
     
         var make_args_nodes = []
         var func_ref = '$locals_'+scope.id.replace(/\./g,'_')+'["'+this.name+'"]'
-        var js = 'var $ns = $B.argsfast("'+this.name+'", '+
-            this.argcount+', {'+this.slots.join(', ')+'}, '+
+        var js = 'var $ns = $B.argsfast("'+this.name+'", '
++
+            this.argcount+', {'+this.slots.join(', ')+'}, '
++
             '['+slot_list.join(', ')+'], pos_args, kw_args, '
         if(defs1.length){js += '$defaults, '}
         else{js += '{}, '}
@@ -3839,7 +3841,7 @@ function $OpCtx(context,op){
                         var res = 'typeof '+t0.to_js()+'=="number" ? '
                         res += t0.to_js()+this.op+t1.to_js()+' : '
                         res += 'getattr('+this.tree[0].to_js()
-                        res += ',"__'+method+'__")('+this.tree[1].to_js()+')'
+                        res += ',"__'+method+'__")(['+this.tree[1].to_js()+'])'
                         return res
                     }
 
@@ -3854,7 +3856,7 @@ function $OpCtx(context,op){
                         var res = 'typeof '+t0.to_js()+'=="string" ? '
                         res += t0.to_js()+this.op+t1.to_js()+' : '
                         res += 'getattr('+this.tree[0].to_js()
-                        res += ',"__'+method+'__")('+this.tree[1].to_js()+')'
+                        res += ',"__'+method+'__")(['+this.tree[1].to_js()+'])'
                         return res
                     }
                     break;
@@ -3864,7 +3866,7 @@ function $OpCtx(context,op){
                         res += 'typeof '+t0.to_js()+'==typeof '+t1.to_js()
                         res += ' ? '+t0.to_js()+this.op+t1.to_js()+' : '
                         res += 'getattr('+this.tree[0].to_js()
-                        res += ',"__'+method+'__")('+this.tree[1].to_js()+')'
+                        res += ',"__'+method+'__")(['+this.tree[1].to_js()+'])'
                         return res
                     }
                     break;
@@ -4012,16 +4014,16 @@ function $OpCtx(context,op){
                         res[pos++]='+'+this.tree[1].to_js()
                     }
                     res[pos++]= ': getattr('+this.tree[0].to_js()+',"__'
-                    res[pos++]= $operators[this.op]+'__")'+'('+this.tree[1].to_js()+')'
+                    res[pos++]= $operators[this.op]+'__")'+'(['+this.tree[1].to_js()+'])'
                     //if(this.op=='+'){console.log(res)}
                     return '('+res.join('')+')'
                 }
             }
             var res = 'getattr('+e0.to_js()+',"__'
-            return res + $operators[this.op]+'__")'+'('+e1.to_js()+')'
+            return res + $operators[this.op]+'__")'+'(['+e1.to_js()+'])'
           default:
             var res = 'getattr('+this.tree[0].to_js()+',"__'
-            return res + $operators[this.op]+'__")'+'('+this.tree[1].to_js()+')'
+            return res + $operators[this.op]+'__")'+'(['+this.tree[1].to_js()+'])'
         }
     }
 
@@ -4220,7 +4222,8 @@ function $SingleKwCtx(context,token){
         var pctx = pnode.children[rank-1].context
         if(pctx.tree.length>0){
             var elt = pctx.tree[0]
-            if(elt.type=='for' || elt.type=='asyncfor' ||
+            if(elt.type=='for' || 
+elt.type=='asyncfor' ||
                 (elt.type=='condition' && elt.token=='while')){
                 elt.has_break = true
                 elt.else_node = $get_node(this)

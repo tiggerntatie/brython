@@ -105,9 +105,9 @@ $ListDict.__eq__ = function(self,other){
     return false
 }
 
-$ListDict.__getitem__ = function(self,arg){
-    var $=$B.args('__getitem__',2,{self:null,key:null},
-        ['self','key'],arguments,{},null,null),
+$ListDict.__getitem__ = function(p, k){
+    var $=$B.argsfast('__getitem__', 2, {self:null, key:null},
+        ['self','key'], p, k, {}, null, null),
         self=$.self, key=$.key
 
     var klass = $B.get_class(self).$factory
@@ -224,8 +224,8 @@ $ListDict.__init__ = function(self,arg){
 }
 
 var $list_iterator = $B.$iterator_class('list_iterator')
-$ListDict.__iter__ = function(self){
-    return $B.$iterator(self,$list_iterator)
+$ListDict.__iter__ = function(p){
+    return $B.$iterator(p[0],$list_iterator)
 }
 
 $ListDict.__le__ = function(self,other){
@@ -263,8 +263,8 @@ $ListDict.__mul__ = function(self,other){
 
 $ListDict.__ne__ = function(self,other){return !$ListDict.__eq__(self,other)}
 
-$ListDict.__repr__ = function(self){
-    if(self===undefined) return "<class 'list'>"
+$ListDict.__repr__ = function(p){
+    var self = p[0]
 
     var _r=[]
     for(var i=0;i<self.length;i++){
@@ -313,9 +313,9 @@ $B.make_rmethods($ListDict)
 
 var _ops=['add', 'sub']
 
-$ListDict.append = function(){
-    var $=$B.args('append',2,{self:null,x:null},['self','x'],
-        arguments,{},null,null)
+$ListDict.append = function(p, k){
+    var $=$B.argsfast('append', 2, {self:null, x:null}, ['self', 'x'],
+        p, k, {}, null, null)
     $.self[$.self.length]=$.x
     return $N
 }
@@ -589,15 +589,11 @@ for(var $attr in $ListDict){
         // Cf issue 364
         $ListDict[$attr] = (function(attr){
             var method = $ListDict[attr],
-                func = function(){
+                func = function(p, k){
                     var self = arguments[0]
                     if(self.$t!==undefined){
-                        var args = [self.$t]
-                        for(var i=1, len=arguments.length; i<len; i++){
-                            args.push(arguments[i])
-                        }
-                        return method.apply(null, args)
-                    }else{return method.apply(null, arguments)}
+                        return method([self.$t].concat(p.slice(1)), k)
+                    }else{return method(p, k)}
                 }
             return func
         })($attr)
