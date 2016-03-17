@@ -378,8 +378,9 @@ $B.$gen_expr = function(env){
         toString:function(){return '(generator)'}
     }
     $GenExprDict.__mro__ = [$GenExprDict,_b_.object.$dict]
-    $GenExprDict.__iter__ = function(self){return self}
-    $GenExprDict.__next__ = function(self){
+    $GenExprDict.__iter__ = function(p){return p[0]}
+    $GenExprDict.__next__ = function(p){
+        var self=p[0]
         self.$counter += 1
         if(self.$counter>=self.value.length){
             throw _b_.StopIteration('')
@@ -846,7 +847,7 @@ $B.stderr_buff = '' // buffer for standard output
 
 $B.stdout = {
     __class__:$io,
-    write: function(data){console.log(data)},
+    write: function(p){console.log(p[0])},
     flush:function(){}
 }
 

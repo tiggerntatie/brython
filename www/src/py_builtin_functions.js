@@ -1042,7 +1042,15 @@ function $print(){
         file = ks['file'] === undefined ? $B.stdout : ks['file'],
         args = $ns['args']
 
-    getattr(file,'write')(args.map(_b_.str).join(sep)+end)
+   var _args = []
+    for(var i=0, len=args.length;i<len;i++){_args.push(_b_.str(args[i]))}
+    try{
+        getattr(file,'write')([_args.join(sep)+end])
+    }catch(err){
+        console.log(err)
+        console.log(file, $B.stdout)
+        throw err
+    }
     return None
 }
 $print.__name__ = 'print'
@@ -1218,11 +1226,11 @@ function setattr(obj,attr,value){
         // descriptor protocol : if obj has attribute attr and this attribute 
         // has a method __set__(), use it
         if(res.__set__!==undefined){
-            res.__set__(res, obj, value); return None
+            res.__set__([res, obj, value]); return None
         }
         var __set__ = getattr(res,'__set__',null)
         if(__set__ && (typeof __set__=='function')) {
-            __set__.apply(res,[obj,value]);return None
+            __set__([obj,value]);return None
         }
     }
 
@@ -1233,15 +1241,15 @@ function setattr(obj,attr,value){
     }
     
     // Search the __setattr__ method
-    var setattr=false
+    var _setattr=false
     if(klass!==undefined){
         for(var i=0, _len=klass.__mro__.length;i<_len;i++){
-            setattr = klass.__mro__[i].__setattr__
-            if(setattr){break}
+            _setattr = klass.__mro__[i].__setattr__
+            if(_setattr){break}
         }
     }
     
-    if(!setattr){obj[attr]=value}else{setattr(obj,attr,value)}
+    if(!_setattr){obj[attr]=value}else{_setattr([obj,attr,value])}
     return None
 }
 

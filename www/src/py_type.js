@@ -506,15 +506,8 @@ $B.$type.__getattribute__=function(klass,attr){
             // return a method that adds initial args to the function
             // arguments
             var method = (function(initial_args){
-                    return function(){
-                        // class method
-                        // make a local copy of initial args
-                        var local_args = initial_args.slice()
-                        var pos=local_args.length
-                        for(var i=0;i < arguments.length;i++){
-                            local_args[pos++]=arguments[i]
-                        }
-                        return res.apply(null,local_args)
+                    return function(p, k){
+                        return res(initial_args.concat(p), k)
                     }})(args)
                 method.__class__ = $B.$FunctionDict
                 method.__eq__ = function(other){

@@ -321,7 +321,8 @@ $ObjectDict.__repr__ = function(self){
     }
 }
 
-$ObjectDict.__setattr__ = function(self,attr,val){
+$ObjectDict.__setattr__ = function(p, k){
+    var self=p[0], attr=p[1] ,val=p[2]
     if(val===undefined){ // setting an attribute to 'object' type is not allowed
         throw _b_.TypeError("can't set attributes of built-in/extension type 'object'")
     }else if(self.__class__===$ObjectDict){

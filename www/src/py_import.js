@@ -425,18 +425,20 @@ finder_stdlib_static.$dict = {
         // Fallback to default module creation
         return _b_.None;
     },
-    exec_module : function(cls, module, blocking) {
+    exec_module : function(p, k){
+        var cls=p[0], module=p[1]
         var metadata = module.__spec__.loader_state;
         module.$is_package = metadata.is_package; 
         if (metadata.ext == 'py') {
-            import_py(module, metadata.path, module.__package__, blocking);
+            import_py(module, metadata.path, module.__package__);
         }
         else {
-            import_js(module, metadata.path, blocking);
+            import_js(module, metadata.path);
         }
         delete module.__spec__['loader_state'];
     },
-    find_module: function(cls, name, path){
+    find_module: function(p, k){
+        var cls=p[0], name=p[1], path=p[2]
         var spec = cls.$dict.find_spec(cls, name, path)
         if(spec===_b_.None){return _b_.None}
         return {__class__:Loader,
@@ -449,7 +451,8 @@ finder_stdlib_static.$dict = {
             }
         }
     },
-    find_spec: function(cls, fullname, path, prev_module) {
+    find_spec: function(p, k){
+        var cls=p[0], fullname=p[1], path=p[2], prev_module=p[3]
         if ($B.stdlib) {
             var address = $B.stdlib[fullname];
             if(address===undefined){
@@ -514,7 +517,8 @@ finder_path.$dict = {
         return _b_.None;
     },
 
-    exec_module : function(cls, module) {
+    exec_module : function(p, k){
+        var cls=p[0], module=p[1]
         var _spec = _b_.getattr(module, '__spec__'),
             code = _spec.loader_state.code;
         module.$is_package = _spec.loader_state.is_package,
@@ -528,11 +532,13 @@ finder_path.$dict = {
         }
     },
 
-    find_module: function(cls, name, path){
+    find_module: function(p, k){
+        var cls=p[0], name=p[1], path=p[2]
         return finder_path.$dict.find_spec(cls, name, path)
     },
 
-    find_spec : function(cls, fullname, path, prev_module) {
+    find_spec : function(p, k){
+        var cls=p[0], fullname=p[1], path=p[2], prev_module=p[3]
         if (is_none(path)) {
             // [Import spec] Top-level import , use sys.path
             path = $B.path
@@ -551,7 +557,7 @@ finder_path.$dict = {
                      ++j) {
                     var hook = $B.path_hooks[j];
                     try {
-                        finder = _b_.getattr(hook, '__call__')(path_entry)
+                        finder = _b_.getattr(hook, '__call__')([path_entry])
                         finder_notfound = false;
                     }
                     catch (e) {
@@ -563,7 +569,7 @@ finder_path.$dict = {
                 }
             }
             var spec = _b_.getattr(_b_.getattr(finder, 'find_spec'),
-                                   '__call__')(fullname, prev_module);
+                                   '__call__')([fullname, prev_module]);
             if (!is_none(spec)) {
                 return spec;
             }
@@ -672,7 +678,8 @@ url_hook.$dict = {
                                    "(unbound)") + ' at ' + self.path_entry + '>'
     },
 
-    find_spec : function(self, fullname, module) {
+    find_spec : function(p, k){
+        var self=p[0], fullname=p[1], module=p[2]
         var loader_data = {},
             notfound = true,
             hint = self.hint,

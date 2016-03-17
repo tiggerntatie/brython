@@ -310,7 +310,8 @@ $StyleDict.__getattr__ = function(self,attr){
     return $ObjectDict.__getattribute__(self.js,attr)
 }
 
-$StyleDict.__setattr__ = function(self,attr,value){
+$StyleDict.__setattr__ = function(p, k){
+    var self=p[0], attr=p[1], value=p[2]
     if(attr.toLowerCase()==='float'){
         self.js.cssFloat = value
         self.js.styleFloat = value
@@ -520,7 +521,8 @@ DOMNodeDict.__getattribute__ = function(self,attr){
     return $ObjectDict.__getattribute__(self,attr)
 }
 
-DOMNodeDict.__getitem__ = function(self,key){
+DOMNodeDict.__getitem__ = function(p, k){
+    var self=p[0],key=p[1]
     if(self.elt.nodeType===9){ // Document
         if(typeof key==="string"){
             var res = self.elt.getElementById(key)
@@ -540,12 +542,14 @@ DOMNodeDict.__getitem__ = function(self,key){
     }
 }
 
-DOMNodeDict.__iter__ = function(self){ // for iteration
+DOMNodeDict.__iter__ = function(p, k){ // for iteration
+    var self=p[0]
     self.$counter = -1
     return self
 }
 
-DOMNodeDict.__le__ = function(self,other){
+DOMNodeDict.__le__ = function(p, k){
+    var self=p[0], other=p[1]
     // for document, append child to document.body
     var elt = self.elt
     if(self.elt.nodeType===9){elt = self.elt.body} 
@@ -613,7 +617,8 @@ DOMNodeDict.__str__ = DOMNodeDict.__repr__ = function(self){
     return res+$NodeTypes[self.elt.nodeType]+"' name '"+self.elt.nodeName+"'>"
 }
 
-DOMNodeDict.__setattr__ = function(self,attr,value){
+DOMNodeDict.__setattr__ = function(p){
+   var self=p[0], attr=p[1], value=p[2]
    if(attr.substr(0,2)=='on'){ // event
         if (!_b_.bool(value)) { // remove all callbacks attached to event
             DOMNodeDict.unbind(self,attr.substr(2))
