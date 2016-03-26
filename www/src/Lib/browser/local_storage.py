@@ -14,7 +14,7 @@ class LocalStorage():
     def __init__(self):
         if not has_local_storage:
             raise EnvironmentError("LocalStorage not available")
-        self.store = JSObject(window.localStorage)
+        self.store = window.localStorage
 
     def __delitem__(self, key):
         if (not isinstance(key, str)):
@@ -42,7 +42,8 @@ class LocalStorage():
     def __contains__(self, key):
         if (not isinstance(key, str)):
             raise TypeError("key must be string")
-        res = __BRYTHON__.JSObject(self.store.getItem(key))
+        print(45, self.store)
+        res = self.store.getItem(key)
         if res is None:
             return False
         return True

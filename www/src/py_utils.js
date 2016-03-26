@@ -796,7 +796,7 @@ $B.$is_member = function(item,_set){
     try{f = _b_.getattr(_set,"__contains__")}
     catch(err){}
 
-    if(f) return f(item)
+    if(f) return f([item])
 
     // use __iter__ if defined
     try{_iter = _b_.iter(_set)}
@@ -805,7 +805,7 @@ $B.$is_member = function(item,_set){
         while(1){
             try{
                 var elt = _b_.next(_iter)
-                if(_b_.getattr(elt,"__eq__")(item)) return true
+                if(_b_.getattr(elt,"__eq__")([item])) return true
             }catch(err){
                 if(err.__name__=="StopIteration") return false
                 throw err
@@ -824,7 +824,7 @@ $B.$is_member = function(item,_set){
             i++
             try{
                 var elt = f(i)
-                if(_b_.getattr(elt,"__eq__")(item)) return true
+                if(_b_.getattr(elt,"__eq__")([item])) return true
             }catch(err){
                 if(err.__name__=='IndexError') return false
                 throw err

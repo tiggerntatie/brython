@@ -733,6 +733,7 @@ function input(src) {
 }
 
 function isinstance(obj,arg){
+    if(arg.$builtin){arg = arg.$builtin}
     if(obj===null) return arg===None
     if(obj===undefined) return false
     if(arg.constructor===Array){
@@ -1827,12 +1828,14 @@ $B.wrap_builtin = function(bltin){
     // if obj is a function, the arguments (p,k) received by _b_.$wrap(obj)
     // are converted before applying obj
     if(typeof bltin == 'function'){
-        return function(p, k){
+        var res = function(p, k){
             if(k!==undefined){
                 p.push({$nat:'kw', kw: k})
             }
             return bltin.apply(null, p)
         }
+        res.$builtin = bltin
+        return res
     }else{
         return bltin
     }

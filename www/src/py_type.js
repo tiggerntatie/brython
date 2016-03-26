@@ -8,7 +8,7 @@ $B.$class_constructor = function(class_name,class_obj,parents,parents_names,kwar
     // transform class object into a dictionary
     var setitem=_b_.dict.$dict.__setitem__
     for(var attr in class_obj){
-        setitem(cl_dict,attr,class_obj[attr])
+        setitem([cl_dict,attr,class_obj[attr]])
     }
     // check if parents are defined
     if(parents!==undefined){
@@ -572,7 +572,6 @@ function $instance_creator(klass){
 
     return function(p, k){
         var obj
-        var _args = Array.prototype.slice.call(arguments)
         
         // apply __new__ to initialize the instance
         if(simple && klass.__new__==undefined){

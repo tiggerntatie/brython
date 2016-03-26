@@ -669,22 +669,23 @@ DOMNodeDict.abs_top = {
     }
 }
 
-DOMNodeDict.bind = function(self,event){
+DOMNodeDict.bind = function(p, k){
+    var self=p[0],event=p[1]
     // bind functions to the event (event = "click", "mouseover" etc.)
     var _id
     if(self.elt.nodeType===9){_id=0}
     else{_id = self.elt.$brython_id}
     // if element id is not referenced in $B.events, create a new entry
     var _d=_b_.dict.$dict
-    if(!_d.__contains__($B.events, _id)){
-        _d.__setitem__($B.events, _id, dict())
+    if(!_d.__contains__([$B.events, _id])){
+        _d.__setitem__([$B.events, _id, dict()])
     }
-    var item = _d.__getitem__($B.events, _id)
+    var item = _d.__getitem__([$B.events, _id])
     // If event is not already registered for the element, create a new list
-    if(!_d.__contains__(item, event)){
-        _d.__setitem__(item, event, [])
+    if(!_d.__contains__([item, event])){
+        _d.__setitem__([item, event, []])
     }
-    var evlist = _d.__getitem__(item, event)
+    var evlist = _d.__getitem__([item, event])
     var pos=evlist.length
     for(var i=2;i<arguments.length;i++){
         var func = arguments[i]
@@ -1144,7 +1145,8 @@ $QueryDict.__iter__ = function(self){
 
 $QueryDict.__mro__ = [$QueryDict,$ObjectDict]
 
-$QueryDict.getfirst = function(self,key,_default){
+$QueryDict.getfirst = function(p, k){
+    var self=p[0], key=p[1], _default=p[2]
     // returns the first value associated with key
     var result = self._values[key]
     if(result===undefined){

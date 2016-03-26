@@ -110,10 +110,10 @@ $DictDict.__bool__ = function (self) {
     return $DictDict.__len__(self) > 0
 }
 
-$DictDict.__contains__ = function(){
+$DictDict.__contains__ = function(p, k){
 
-    var $ = $B.args('__contains__', 2, {self:null, item:null},
-        ['self', 'item'], arguments, {}, null, null),
+    var $ = $B.argsfast('__contains__', 2, {self:null, item:null},
+        ['self', 'item'], p, k, {}, null, null),
         self=$.self, item=$.item
 
     if(self.$jsobj) return self.$jsobj[item]!==undefined
@@ -216,9 +216,9 @@ $DictDict.__eq__ = function(){
 
 }
 
-$DictDict.__getitem__ = function(){
-    var $ = $B.args('__getitem__', 2, {self:null, arg:null},
-        ['self', 'arg'], arguments, {}, null, null),
+$DictDict.__getitem__ = function(p, k){
+    var $ = $B.argsfast('__getitem__', 2, {self:null, arg:null},
+        ['self', 'arg'], p, k, {}, null, null),
         self=$.self, arg=$.arg
 
     if(self.$jsobj){
@@ -394,10 +394,10 @@ $DictDict.__repr__ = function(self){
     return '{'+ res.join(', ') +'}'
 }
 
-$DictDict.__setitem__ = function(self,key,value){
+$DictDict.__setitem__ = function(p, k){
 
-    var $ = $B.args('__setitem__', 3, {self:null, key:null, value:null},
-        ['self', 'key', 'value'], arguments, {}, null, null),
+    var $ = $B.argsfast('__setitem__', 3, {self:null, key:null, value:null},
+        ['self', 'key', 'value'], p, k, {}, null, null),
         self=$.self, key=$.key, value=$.value
 
     if(self.$jsobj){self.$jsobj[key]=value;return}

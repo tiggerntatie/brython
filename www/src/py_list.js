@@ -28,9 +28,9 @@ $ListDict.__add__ = function(self,other){
     return res
 }
 
-$ListDict.__contains__ = function(self,item){
-    var $=$B.args('__contains__',2,{self:null,item:null},['self','item'],
-        arguments,{},null,null), 
+$ListDict.__contains__ = function(p, k){
+    var $=$B.argsfast('__contains__',2,{self:null,item:null},['self','item'],
+        p, k, {}, null, null), 
         self=$.self, 
         item=$.item
     var _eq = getattr(item, '__eq__')

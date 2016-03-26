@@ -75,8 +75,8 @@
                 __name__:tagName
                 }
         
-            dict.__init__ = function(){
-                var $ns=$B.args('pow',1,{self:null},['self'],arguments,
+            dict.__init__ = function(p, k){
+                var $ns=$B.argsfast('__init__',1,{self:null},['self'],p, k,
                     {},'args','kw')
                 var self = $ns['self']
                 var args = $ns['args']
@@ -139,9 +139,10 @@
         
             dict.__mro__ = [dict,$B.DOMNodeDict,$B.builtins.object.$dict]
         
-            dict.__new__ = function(cls){
+            dict.__new__ = function(p){
                 // __new__ must be defined explicitely : it returns an instance of
                 // DOMNode for the specified tagName
+                var cls = p[0]
                 var res = $B.DOMNode(document.createElement(tagName))
                 res.__class__ = cls.$dict
                 return res
@@ -155,12 +156,11 @@
         // are defined in py_dom.js
         
         function makeFactory(tagName){
-            var factory = function(){
+            var factory = function(p, k){
                 var res = $B.DOMNode(document.createElement(tagName))
                 res.__class__ = dicts[tagName]
                 // apply __init__
-                var args = [res].concat(Array.prototype.slice.call(arguments))
-                dicts[tagName].__init__.apply(null,args)
+                dicts[tagName].__init__([res].concat(p), k)
                 return res
             }
             factory.__class__=$B.$factory
