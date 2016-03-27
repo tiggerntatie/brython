@@ -973,8 +973,7 @@ $B.$iterator = function(items,klass){
         __len__:function(){return items.length},
         __next__:function(){
             res.counter++
-            if(res.counter<items.length){return items[res.counter]
-}
+            if(res.counter<items.length){return items[res.counter]}
             throw _b_.StopIteration("StopIteration")
         },
         __repr__:function(){return "<"+klass.__name__+" object>"},

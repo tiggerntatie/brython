@@ -8,9 +8,7 @@ from browser import document as doc, window, alert
 # set height of container to 66% of screen
 _height = doc.documentElement.clientHeight
 _s = doc['container']
-print('11')
 _s.style.height = '%spx' % int(_height * 0.66)
-print(13)
 has_ace = True
 try:
     editor = window.ace.edit("editor")
@@ -32,7 +30,7 @@ except:
     editor.getValue = get_value
     editor.setValue = set_value
     has_ace = False
-print(35)
+
 if hasattr(window, 'localStorage'):
     from browser.local_storage import storage
 else:
@@ -43,6 +41,7 @@ if 'set_debug' in doc:
 
 def reset_src():
     if storage is not None and "py_src" in storage:
+        print(storage["py_src"])
         editor.setValue(storage["py_src"])
     else:
         editor.setValue('for i in range(10):\n\tprint(i)')
@@ -62,20 +61,18 @@ class cOutput:
 
     def flush(self):
         pass
-print(65)
+
 if "console" in doc:
-    print(67)
     sys.stdout = cOutput()
-    print(69)
     sys.stderr = cOutput()
 
 def to_str(xx):
     return str(xx)
-print(72)
+
 info = sys.implementation.version
-print(74)
+
 doc['version'].text = '%s.%s.%s' % (info.major, info.minor, info.micro)
-print(75)
+
 output = ''
 
 def show_console(ev):
@@ -107,7 +104,7 @@ def run(*args):
 
     print('<completed in %6.2f ms>' % ((time.perf_counter() - t0) * 1000.0))
     return state
-print(107)
+
 def show_js(ev):
     src = editor.getValue()
     doc["console"].value = javascript.py2js(src, '__main__')

@@ -62,7 +62,8 @@ $StringDict.__delitem__ = function(){
 // classes doesn't use __mro__
 $StringDict.__dir__ = $ObjectDict.__dir__ 
 
-$StringDict.__eq__ = function(self,other){
+$StringDict.__eq__ = function(p, k){
+    var self=p[0], other=p[1]
     if(other===undefined){ // compare object "self" to class "str"
         return self===str
     }
@@ -725,7 +726,8 @@ $StringDict.__mul__ = function(self,other){
 
 $StringDict.__ne__ = function(self,other){return other!==self.valueOf()}
 
-$StringDict.__repr__ = function(self){
+$StringDict.__repr__ = function(p, k){
+    var self = p[0]
     var res = self.replace(/\n/g,'\\\\n')
     // escape the escape char
     res = res.replace(/\\/g, '\\\\')

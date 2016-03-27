@@ -26,7 +26,7 @@ class LocalStorage():
     def __getitem__(self, key):
         if (not isinstance(key, str)):
             raise TypeError("key must be string")
-        res = __BRYTHON__.JSObject(self.store.getItem(key))
+        res = self.store.getItem(key)
         if res is not None:
             return res
         raise KeyError(key)
@@ -42,7 +42,6 @@ class LocalStorage():
     def __contains__(self, key):
         if (not isinstance(key, str)):
             raise TypeError("key must be string")
-        print(45, self.store)
         res = self.store.getItem(key)
         if res is None:
             return False

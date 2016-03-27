@@ -1614,8 +1614,8 @@ $BoolDict.__neg__ = function(self){return -$B.int_or_bool(self)}
 
 $BoolDict.__pos__ = $B.int_or_bool
 
-$BoolDict.__repr__ = $BoolDict.__str__ = function(self){
-    if(self.valueOf()) return "True"
+$BoolDict.__repr__ = $BoolDict.__str__ = function(p){
+    if(p[0].valueOf()) return "True"
     return "False"
 }
 

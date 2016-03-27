@@ -36,7 +36,7 @@ $ListDict.__contains__ = function(p, k){
     var _eq = getattr(item, '__eq__')
     var i=self.length
     while(i--) {
-        if(_eq(self[i])) return true
+        if(_eq([self[i]])) return true
     }
     return false
 }
@@ -629,8 +629,8 @@ function $tuple(arg){return arg} // used for parenthesed expressions
 
 var $TupleDict = {__class__:$B.$type,__name__:'tuple',$native:true}
 
-$TupleDict.__iter__ = function(self){
-    return $B.$iterator(self,$tuple_iterator)
+$TupleDict.__iter__ = function(p, k){
+    return $B.$iterator(p[0],$tuple_iterator)
 }
 
 // other attributes are defined in py_list.js, once list is defined
