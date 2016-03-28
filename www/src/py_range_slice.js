@@ -93,19 +93,20 @@ $RangeIterator.$dict = {
     __name__: 'range_iterator',
     $factory: $RangeIterator,
     
-    __iter__: function(self){return self},
+    __iter__: function(p){return p[0]},
     
-    __next__: function(self){return _b_.next(self.obj)}
+    __next__: function(p){return _b_.next(p[0].obj)}
 }
 $RangeIterator.$dict.__mro__ = [$RangeIterator.$dict, _b_.object.$dict]
 
-$RangeDict.__iter__ = function(self){
-    var res = {
-        __class__ : $RangeDict,
-        start:self.start,
-        stop:self.stop,
-        step:self.step
-    }
+$RangeDict.__iter__ = function(p, k){
+    var self=p[0],
+        res = {
+            __class__ : $RangeDict,
+            start:self.start,
+            stop:self.stop,
+            step:self.step
+        }
     if(self.$safe){
         res.$counter = self.start-self.step
     }else{
@@ -136,7 +137,8 @@ $RangeDict.__len__ = function(self){
     return len
 }
 
-$RangeDict.__next__ = function(self){
+$RangeDict.__next__ = function(p, k){
+    var self = p[0]
     if(self.$safe){
         self.$counter += self.step
         if((self.step>0 && self.$counter >= self.stop)
@@ -278,9 +280,9 @@ range.$is_func = true
 // slice
 // slice
 var $SliceDict = {__class__:$B.$type, 
-	__name__:'slice', 
-	$native:true,
-	descriptors:{start:true,step:true,stop:true}
+    __name__:'slice', 
+    $native:true,
+    descriptors:{start:true,step:true,stop:true}
 }
 
 $SliceDict.__mro__ = [$SliceDict, _b_.object.$dict]

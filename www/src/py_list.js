@@ -242,7 +242,8 @@ $ListDict.__lt__ = function(self,other){
 
 $ListDict.__mro__ = [$ListDict,$ObjectDict]
 
-$ListDict.__mul__ = function(self,other){
+$ListDict.__mul__ = function(p, k){
+    var self=p[0], other=p[1]
     if(isinstance(other,_b_.int)) {  //this should be faster..
        var res=[],
            $temp = self.slice(), 
