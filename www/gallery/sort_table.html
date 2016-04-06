@@ -71,6 +71,7 @@ import time
 t0 = time.time()
 
 orders = {}
+orders[0] = 'a'
 
 def sort_by_col(evt, numeric=False):
     cell = evt.target
@@ -155,6 +156,7 @@ title <= html.TH('Population'+link_num.clone())
 t <= title
 
 rows = []
+
 for i in range(int(len(lines)/4)):
     row = html.TR()
     row <= (html.TD(lines[4*i+j]) for j in range(2))

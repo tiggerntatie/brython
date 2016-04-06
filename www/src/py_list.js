@@ -232,8 +232,8 @@ $ListDict.__le__ = function(self,other){
     return !$ListDict.__gt__(self,other)
 }
 
-$ListDict.__len__ = function(self){
-    return self.length
+$ListDict.__len__ = function(p){
+    return p[0].length
 }
 
 $ListDict.__lt__ = function(self,other){
@@ -412,8 +412,8 @@ $ListDict.remove = function(){
     throw _b_.ValueError(_b_.str($.x)+" is not in list")
 }
 
-$ListDict.reverse = function(self){
-    var $=$B.args('reverse',1,{self:null},['self'],arguments,{},null,null),
+$ListDict.reverse = function(p, k){
+    var $=$B.argsfast('reverse',1,{self:null},['self'],p,k,{},null,null),
         _len=$.self.length-1,
         i=parseInt($.self.length/2)
     while (i--) {
@@ -452,11 +452,11 @@ function $partition(arg,array,begin,end,pivot)
     }else{
         var len=array.length
         for(var ix=begin;ix<end-1;++ix) {
-            var x = arg(array[ix])
+            var x = arg([array[ix]])
             // If the comparison function changes the array size, raise
             // ValueError
             if(array.length!==len){throw ValueError('list modified during sort')}
-            if(getattr(x,'__le__')(arg(piv))) {
+            if(getattr(x,'__le__')(arg([piv]))) {
                 array = swap(array, store, ix);
                 ++store;
             }
@@ -496,13 +496,15 @@ function $elts_class(self){
     return cl
 }
 
-$ListDict.sort = function(self){
-    var $=$B.args('sort',1,{self:null},['self'],arguments,{},
-        null,'kw')
-    
-    var func=null
-    var reverse = false
-    var kw_args = $.kw, keys=_b_.list(_b_.dict.$dict.keys(kw_args))
+$ListDict.sort = function(p, k){
+    var $=$B.argsfast('sort',1,{self:null},['self'],p,k,{},
+        null,'kw'),
+        self = $.self,
+        kw_args = $.kw,
+        func = null,
+        reverse = false,
+        keys=_b_.list(_b_.dict.$dict.keys([kw_args]))
+
     for(var i=0;i<keys.length;i++){
         if(keys[i]=="key"){func=getattr(kw_args.$string_dict[keys[i]],'__call__')}
         else if(keys[i]=='reverse'){reverse=kw_args.$string_dict[keys[i]]}

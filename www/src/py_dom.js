@@ -365,9 +365,9 @@ DOMNodeDict.$factory = DOMNode
 DOMNodeDict.__mro__ = [DOMNodeDict,_b_.object.$dict]
 
 
-DOMNodeDict.__add__ = function(self,other){
+DOMNodeDict.__add__ = function(p){
     // adding another element to self returns an instance of $TagSum
-    var res = $TagSum()
+    var self = p[0], other = p[1], res = $TagSum()
     res.children = [self], pos=1
     if(isinstance(other,$TagSum)){
         res.children = res.children.concat(other.children)
@@ -415,8 +415,8 @@ DOMNodeDict.__delitem__ = function(self,key){
     }
 }
 
-DOMNodeDict.__eq__ = function(self,other){
-    return self.elt==other.elt
+DOMNodeDict.__eq__ = function(p){
+    return p[0].elt===p[1].elt
 }
 
 DOMNodeDict.__getattribute__ = function(self,attr){
@@ -457,7 +457,7 @@ DOMNodeDict.__getattribute__ = function(self,attr){
               var header = headers[i]
               if(header.strip().length==0){continue}
               var pos = header.search(':')
-              res.__setitem__(header.substr(0,pos),header.substr(pos+1).lstrip())
+              res.__setitem__([header.substr(0,pos),header.substr(pos+1).lstrip()])
           }
           return res;
         }
@@ -569,7 +569,7 @@ DOMNodeDict.__le__ = function(p, k){
             // If other is an iterable, add the items
             var items = _b_.list(other)
             for(var i=0; i<items.length; i++){
-                DOMNodeDict.__le__(self, items[i])
+                DOMNodeDict.__le__([self, items[i]])
             }
         }catch(err){
             throw _b_.TypeError("can't add '"+
@@ -603,8 +603,8 @@ DOMNodeDict.__next__ = function(self){
    throw _b_.StopIteration('StopIteration')
 }
 
-DOMNodeDict.__radd__ = function(self,other){ // add to a string
-    var res = $TagSum()
+DOMNodeDict.__radd__ = function(p){ // add to a string
+    var self=p[0],other=p[1],res = $TagSum()
     var txt = DOMNode(document.createTextNode(other))
     res.children = [txt,self]
     return res
@@ -687,12 +687,12 @@ DOMNodeDict.bind = function(p, k){
     }
     var evlist = _d.__getitem__([item, event])
     var pos=evlist.length
-    for(var i=2;i<arguments.length;i++){
-        var func = arguments[i]
+    for(var i=2;i<p.length;i++){
+        var func = p[i]
         var callback = (function(f){
             return function(ev){
                 try{
-                    return f($DOMEvent(ev))
+                    return f([$DOMEvent(ev)])
                 }catch(err){
                     if(err.__class__!==undefined){
                         var msg = _b_.getattr(err, 'info')+
@@ -741,19 +741,20 @@ DOMNodeDict.Class = function(self){
 
 DOMNodeDict.class_name = function(self){return DOMNodeDict.Class(self)}
 
-DOMNodeDict.clone = function(self){
+DOMNodeDict.clone = function(p, k){
+    var self = p[0]
     res = DOMNode(self.elt.cloneNode(true))
     res.elt.$brython_id='DOM-' + $B.UUID()
 
     // bind events on clone to the same callbacks as self
     var _d=_b_.dict.$dict
-    if(_d.__contains__($B.events, self.elt.$brython_id)){
-        var events = _d.__getitem__($B.events, self.elt.$brython_id)
-        var items = _b_.list(_d.items(events))
+    if(_d.__contains__([$B.events, self.elt.$brython_id])){
+        var events = _d.__getitem__([$B.events, self.elt.$brython_id])
+        var items = _b_.list(_d.items([events]))
         for(var i=0;i<items.length;i++){
             var event = items[i][0]
             for(var j=0;j<items[i][1].length;j++){
-                DOMNodeDict.bind(res,event,items[i][1][j][0])
+                DOMNodeDict.bind([res,event,items[i][1][j][0]])
             }
         }
     }
@@ -1198,11 +1199,13 @@ DOMNodeDict.query = function(self){
 // class used for tag sums
 var $TagSumDict = {__class__ : $B.$type,__name__:'TagSum'}
 
-$TagSumDict.appendChild = function(self,child){    
-    self.children.push(child)
+$TagSumDict.appendChild = function(p){    
+    p[0].children.push(p[1])
 }
 
-$TagSumDict.__add__ = function(self,other){
+$TagSumDict.__add__ = function(p){
+    console.log('add')
+    var self=p[0],other=p[1]
     if($B.get_class(other)===$TagSumDict){
         self.children = self.children.concat(other.children)
     }else if(isinstance(other,[_b_.str,_b_.int,_b_.float,
@@ -1214,14 +1217,15 @@ $TagSumDict.__add__ = function(self,other){
 
 $TagSumDict.__mro__ = [$TagSumDict,$ObjectDict]
 
-$TagSumDict.__radd__ = function(self,other){
+$TagSumDict.__radd__ = function(p){
+    var self=p[0],other=p[1]
     var res = $TagSum()
     res.children = self.children.concat(DOMNode(document.createTextNode(other)))
     return res
 }
 
-$TagSumDict.__repr__ = function(self){
-    var res = '<object TagSum> '
+$TagSumDict.__repr__ = function(p){
+    var self=p[0], res = '<object TagSum> '
     for(var i=0;i<self.children.length;i++){
         res+=self.children[i]
         if(self.children[i].toString()=='[object Text]'){res += ' ['+self.children[i].textContent+']\n'}

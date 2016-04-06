@@ -35,7 +35,7 @@ function check_str(obj){
 $StringDict.__add__ = function(p){
     var self=p[0],other=p[1]
     if(!(typeof other==="string")){
-        try{return getattr(other,'__radd__')(self)}
+        try{return getattr(other,'__radd__')([self])}
         catch(err){throw _b_.TypeError(
             "Can't convert "+$B.get_class(other).__name__+" to str implicitely")}
     }
@@ -753,7 +753,8 @@ $StringDict.__str__ = function(self){
 $StringDict.toString = function(){return 'string!'}
 
 // generate comparison methods
-var $comp_func = function(self,other){
+var $comp_func = function(p){
+    var self = p[0], other = p[1]
     if(typeof other !=="string"){throw _b_.TypeError(
         "unorderable types: 'str' > "+$B.get_class(other).__name__+"()")}
     return self > other

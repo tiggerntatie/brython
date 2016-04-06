@@ -395,7 +395,7 @@ $DictDict.__repr__ = function(self){
 }
 
 $DictDict.__setitem__ = function(p, k){
-
+    
     var $ = $B.argsfast('__setitem__', 3, {self:null, key:null, value:null},
         ['self', 'key', 'value'], p, k, {}, null, null),
         self=$.self, key=$.key, value=$.value
@@ -495,23 +495,17 @@ $DictDict.get = function(){
 
 var $dict_itemsDict = $B.$iterator_class('dict_items')
 
-$DictDict.items = function(self){
-    if (arguments.length > 1) {
-       var _len=arguments.length - 1
-       var _msg="items() takes no arguments ("+_len+" given)"
-       throw _b_.TypeError(_msg)
-    }
+$DictDict.items = function(p, k){
+    var $ = $B.argsfast('items', 1, {self:null}, ['self'], p, k, {}, null, null),
+        self = $.self
     return $iterator_wrapper(new $item_iterator(self), $dict_itemsDict)
 }
 
 var $dict_keysDict = $B.$iterator_class('dict_keys')
 
-$DictDict.keys = function(self){
-    if (arguments.length > 1) {
-       var _len=arguments.length - 1
-       var _msg="keys() takes no arguments ("+_len+" given)"
-       throw _b_.TypeError(_msg)
-    }
+$DictDict.keys = function(p, k){
+    var $ = $B.argsfast('keys', 1, {self:null}, ['self'], p, k, {}, null, null),
+        self = $.self
     return $iterator_wrapper(new $key_iterator(self),$dict_keysDict)
 }
 

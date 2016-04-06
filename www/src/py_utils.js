@@ -398,7 +398,7 @@ $B.$lambda = function(env,args,body){
     // "env" is a list of [local_name, local_ns] lists for all the enclosing
     // namespaces
     // "args" are the arguments, "body" is the function body
-
+    
     var rand = $B.UUID()
     var $res = 'lambda_'+$B.lambda_magic+'_'+rand
     var $py = 'def '+$res+'('+args+'):\n'
@@ -657,10 +657,10 @@ $B.$setitem = function(obj,item,value){
         obj[item]=value
         return
     }else if(obj.__class__===_b_.dict.$dict){
-        obj.__class__.__setitem__(obj, item, value)
+        obj.__class__.__setitem__([obj, item, value])
         return
     }
-    _b_.getattr(obj,'__setitem__')(item,value)
+    _b_.getattr(obj,'__setitem__')([item,value])
 }
 // augmented item
 $B.augm_item_add = function(obj,item,incr){

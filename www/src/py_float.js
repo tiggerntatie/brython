@@ -451,7 +451,8 @@ $FloatDict.__pow__= function(self,other){
     $err("** or pow()",other)
 }
 
-$FloatDict.__repr__ = $FloatDict.__str__ = function(self){
+$FloatDict.__repr__ = $FloatDict.__str__ = function(p){
+    var self = p[0]
     if(self===float) return "<class 'float'>"
     if(self.valueOf() == Infinity) return 'inf'
     if(self.valueOf() == -Infinity) return '-inf'
@@ -520,7 +521,8 @@ for(var $op in $ops){
 }
 
 // comparison methods
-var $comp_func = function(self,other){
+var $comp_func = function(p, k){
+    var self = p[0], other = p[1]
     if(isinstance(other,_b_.int)){
         if(other.__class__===$B.LongInt.$dict){return self > parseInt(other.value)}
         return self > other.valueOf()
