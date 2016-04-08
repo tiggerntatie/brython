@@ -105,13 +105,12 @@ $iterator_wrapper = function(items,klass){
     return res
 }
 
-$DictDict.__bool__ = function (self) {
-    var $=$B.args('__bool__',1,{self:null},['self'],arguments,{},null,null)
+$DictDict.__bool__ = function(p, k) {
+    var $=$B.argsfast('__bool__',1,{self:null},['self'],p,k,{},null,null)
     return $DictDict.__len__(self) > 0
 }
 
 $DictDict.__contains__ = function(p, k){
-
     var $ = $B.argsfast('__contains__', 2, {self:null, item:null},
         ['self', 'item'], p, k, {}, null, null),
         self=$.self, item=$.item
@@ -148,10 +147,10 @@ $DictDict.__contains__ = function(p, k){
     return false
 }
 
-$DictDict.__delitem__ = function(){
+$DictDict.__delitem__ = function(p, k){
 
-    var $ = $B.args('__eq__', 2, {self:null, arg:null},
-        ['self', 'arg'], arguments, {}, null, null),
+    var $ = $B.argsfast('__delitem__', 2, {self:null, arg:null},
+        ['self', 'arg'], p, k, {}, null, null),
         self=$.self, arg=$.arg
 
     if(self.$jsobj){
@@ -182,14 +181,14 @@ $DictDict.__delitem__ = function(){
     return $N
 }
 
-$DictDict.__eq__ = function(){
-    var $ = $B.args('__eq__', 2, {self:null, other:null},
-        ['self', 'other'], arguments, {}, null, null),
+$DictDict.__eq__ = function(p, k){
+    var $ = $B.argsfast('__eq__', 2, {self:null, other:null},
+        ['self', 'other'], p, k, {}, null, null),
         self=$.self, other=$.other
 
     if(!isinstance(other,dict)) return false
     
-    if ($DictDict.__len__(self) != $DictDict.__len__(other)){return false}
+    if ($DictDict.__len__([self]) != $DictDict.__len__([other])){return false}
 
     if((self.$numeric_dict.length!=other.$numeric_dict.length) ||
         (self.$string_dict.length!=other.$string_dict.length) ||
@@ -197,17 +196,17 @@ $DictDict.__eq__ = function(){
             return false
     }
     for(var k in self.$numeric_dict){
-        if(!_b_.getattr(other.$numeric_dict[k],'__eq__')(self.$numeric_dict[k])){
+        if(!_b_.getattr(other.$numeric_dict[k],'__eq__')([self.$numeric_dict[k]])){
             return false
         }
     }
     for(var k in self.$string_dict){
-        if(!_b_.getattr(other.$string_dict[k],'__eq__')(self.$string_dict[k])){
+        if(!_b_.getattr(other.$string_dict[k],'__eq__')([self.$string_dict[k]])){
             return false
         }
     }
     for(var k in self.$object_dict){
-        if(!_b_.getattr(other.$object_dict[k][1],'__eq__')(self.$object_dict[k][1])){
+        if(!_b_.getattr(other.$object_dict[k][1],'__eq__')([self.$object_dict[k][1]])){
             return false
         }
     }
@@ -367,7 +366,8 @@ $DictDict.__next__ = function(self){
     }
 }
 
-$DictDict.__repr__ = function(self){
+$DictDict.__repr__ = function(p, k){
+    var self=p[0]
     if(self===undefined) return "<class 'dict'>"
     if(self.$jsobj){ // wrapper around Javascript object
         var res = []
@@ -613,7 +613,7 @@ function dict(args, second){
                 res.$numeric_dict[item[0]]=item[1]
                 break
               default:
-                si(res, item[0], item[1])
+                si([res, item[0], item[1]])
                 break
             }
         }
