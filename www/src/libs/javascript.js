@@ -20,10 +20,12 @@ var $module=(function($B) {
             }
         }
     },
-    py2js: function(src, module_name){
+    py2js: function(p, k){
+        var src=p[0], module_name=p[1]
         if (is_none(module_name)) {
             module_name = '__main__'+$B.UUID()
         }
+        console.log('src', src)
         return $B.py2js(src,module_name,module_name,'__builtins__').to_js()
     },
     pyobj2jsobj:function(obj){ return $B.pyobj2jsobj(obj)},

@@ -300,7 +300,7 @@ function $eval(src, _globals, _locals){
         eval('var $locals_'+current_globals_id+'=current_frame[3]')
     }else{
         $B.bound[globals_id] = {}
-        var items = _b_.dict.$dict.items(_globals), item
+        var items = _b_.dict.$dict.items([_globals]), item
         while(1){
             try{
                 var item = next(items)
@@ -324,7 +324,7 @@ function $eval(src, _globals, _locals){
             }
         }
     }else{
-        var items = _b_.dict.$dict.items(_locals), item
+        var items = _b_.dict.$dict.items([_locals]), item
         while(1){
             try{
                 var item = next(items)
@@ -373,7 +373,7 @@ function $eval(src, _globals, _locals){
             var lns = eval('$locals_'+locals_id)
             var setitem = getattr(_locals,'__setitem__')
             for(var attr in lns){
-                setitem(attr, lns[attr])
+                setitem([attr, lns[attr]])
             }
         }else{
             for(var attr in lns){current_frame[1][attr] = lns[attr]}
@@ -383,7 +383,7 @@ function $eval(src, _globals, _locals){
             // Update _globals with the namespace after execution
             var setitem = getattr(_globals,'__setitem__')
             for(var attr in gns){
-                setitem(attr, gns[attr])
+                setitem([attr, gns[attr]])
             }
         }else{
             for(var attr in gns){
@@ -409,6 +409,7 @@ function $eval(src, _globals, _locals){
 $eval.$is_func = true
 
 function exec(src, globals, locals){
+    console.log('exec', src)
     return $eval(src, globals, locals,'exec') || _b_.None
 }
 

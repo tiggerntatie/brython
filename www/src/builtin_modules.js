@@ -210,7 +210,8 @@
         JSObject: $B.JSObject,
         JSConstructor: $B.JSConstructor,
         console: $B.JSObject(window.console),
-        load:function(script_url, names){
+        load:function(p, k){
+            var script_url=p[0], names=p[1]
             // Load and eval() the Javascript file at script_url
             // Set the names in array "names" in the Javacript global namespace
             var file_obj = $B.builtins.open(script_url)
@@ -227,7 +228,8 @@
                 }
             }
         },
-        py2js: function(src, module_name){
+        py2js: function(p, k){
+            var src=p[0], module_name=p[1]
             if (is_none(module_name)) {
                 module_name = '__main__'+$B.UUID()
             }
