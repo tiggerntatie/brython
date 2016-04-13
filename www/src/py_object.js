@@ -120,7 +120,8 @@ $ObjectDict.__format__ = function(){
 
 $ObjectDict.__ge__ = $ObjectNI('__ge__','>=')
 
-$ObjectDict.__getattribute__ = function(obj,attr){
+$ObjectDict.__getattribute__ = function(p, k){
+    var obj=p[0], attr=p[1]
     
     var klass = $B.get_class(obj)
     if(attr==='__class__'){

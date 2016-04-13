@@ -276,8 +276,8 @@
             },
         stdout : {
             __get__:function(){return $B.stdout},
-            __set__:function(p){console.log('set stdout', p[2], _b_.getattr(p[2], "write"));var self=p[0], obj=p[1], value=p[2];$B.stdout = value},
-            write:function(p){console.log('stdout write');_b_.getattr($B.stdout,"write")([p[0]])}
+            __set__:function(p){var self=p[0], obj=p[1], value=p[2];$B.stdout = value},
+            write:function(p){_b_.getattr($B.stdout,"write")([p[0]])}
             },
         stdin : $B.stdin
     }

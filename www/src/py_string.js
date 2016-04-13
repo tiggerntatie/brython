@@ -1647,7 +1647,7 @@ function str(arg){
             // class metaclass (usually "type") or its subclasses (usually
             // "object")
             // The metaclass is the attribute __class__ of the class dictionary
-            var func = $B.$type.__getattribute__(arg.$dict.__class__,'__str__')
+            var func = $B.$type.__getattribute__([arg.$dict.__class__,'__str__'])
             if(func.__func__===_b_.object.$dict.__str__){return func(arg)}
             return func()
         }

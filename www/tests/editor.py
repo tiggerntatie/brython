@@ -11,9 +11,13 @@ _s = doc['container']
 _s.style.height = '%spx' % int(_height * 0.66)
 has_ace = True
 try:
+    print('rrr')
     editor = window.ace.edit("editor")
+    print('rrr2')
     session = editor.getSession()
+    print('rrr3', session)
     session.setMode("ace/mode/python")
+    print('editor', 20)
 
     editor.setOptions({
      'enableLiveAutocompletion': True,
@@ -21,12 +25,15 @@ try:
      'highlightActiveLine': False,
      'highlightSelectedWord': True
     })
+    print('editor', 27)
 except:
     from browser import html
     editor = html.TEXTAREA(rows=20, cols=70)
     doc["editor"] <= editor
     def get_value(): return editor.value
-    def set_value(x):editor.value = x
+    def set_value(x):
+        print('set value', x)
+        editor.value = x
     editor.getValue = get_value
     editor.setValue = set_value
     has_ace = False

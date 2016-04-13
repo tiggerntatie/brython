@@ -332,8 +332,8 @@ $DictDict.__init__ = function(self){
 }
 
 var $dict_iterator = $B.$iterator_class('dict iterator')
-$DictDict.__iter__ = function(self) {
-    return $DictDict.keys(self)
+$DictDict.__iter__ = function(p, k) {
+    return $DictDict.keys(p)
 }
 
 $DictDict.__len__ = function(self) {

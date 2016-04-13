@@ -86,7 +86,7 @@ $B.$class_constructor = function(class_name,class_obj,parents,parents_names,kwar
     class_dict.__class__ = metaclass.$dict
     
     // Get method __new__ of metaclass
-    var meta_new = $B.$type.__getattribute__(metaclass.$dict,'__new__')
+    var meta_new = $B.$type.__getattribute__([metaclass.$dict,'__new__'])
     
     // Create the factory function of the class
     if(meta_new.__func__===$B.$type.__new__){
@@ -366,9 +366,10 @@ _b_.type.__class__ = $B.$factory
 _b_.object.$dict.__class__ = $B.$type
 _b_.object.__class__ = $B.$factory
 
-$B.$type.__getattribute__=function(klass,attr){
+$B.$type.__getattribute__ = function(p, k){
+    var klass=p[0], attr=p[1]
     // klass is a class dictionary : in getattr(obj,attr), if obj is a factory,
-    // we call $type.__getattribute__(obj.$dict,attr)
+    // we call $type.__getattribute__([obj.$dict,attr])
     
     switch(attr) {
       case '__call__':
@@ -627,7 +628,8 @@ $B.$MethodDict.__ne__ = function(self, other){
     return !$B.$MethodDict.__eq__(self,other)
 }
 
-$B.$MethodDict.__getattribute__ = function(self, attr){
+$B.$MethodDict.__getattribute__ = function(p, k){
+    var self=p[0], attr=p[1]
     // Internal attributes __name__, __module__, __doc__ etc. 
     // are stored in self.$infos.__func__.$infos
     var infos = self.$infos.__func__.$infos
@@ -642,7 +644,7 @@ $B.$MethodDict.__getattribute__ = function(self, attr){
             return infos[attr]
         }
     }else{
-        return _b_.object.$dict.__getattribute__(self, attr)
+        return _b_.object.$dict.__getattribute__([self, attr])
     }
 }
 $B.$MethodDict.__mro__=[$B.$MethodDict, _b_.object.$dict]

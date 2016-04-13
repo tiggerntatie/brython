@@ -542,7 +542,7 @@ function getattr(obj,attr,_default){
             if(attr=='__new__') return klass[attr](arguments)
             
             var method = function(p, k){
-                return klass[attr]([obj].concat(p), k)
+                return klass[attr]([obj].concat(p||[]), k||{})
             }
             method.__class__ = $B.$MethodDict
             method.$infos = {
@@ -584,7 +584,7 @@ function getattr(obj,attr,_default){
     }
 
 
-    try{var res = attr_func(obj,attr)}
+    try{var res = attr_func([obj,attr])}
     catch(err){
         if(_default!==undefined) return _default
         throw err
@@ -1108,7 +1108,7 @@ function repr(obj){
         // class metaclass (usually "type") or its subclasses (usually
         // "object")
         // The metaclass is the attribute __class__ of the class dictionary
-        var func = $B.$type.__getattribute__(obj.$dict.__class__,'__repr__')
+        var func = $B.$type.__getattribute__([obj.$dict.__class__,'__repr__'])
         return func(obj)
     }
     var func = getattr(obj,'__repr__')
@@ -1310,7 +1310,8 @@ function sum(iterable,start){
 // super() built in function
 var $SuperDict = {__class__:$B.$type,__name__:'super'}
 
-$SuperDict.__getattribute__ = function(self,attr){
+$SuperDict.__getattribute__ = function(p, k){
+    var self=p[0],attr=p[1]
     if($SuperDict[attr]!==undefined){ // for __repr__ and __str__
         return function(){return $SuperDict[attr](self)}
     }
@@ -1375,21 +1376,24 @@ $$super.$is_func = true
 
 var $Reader = {__class__:$B.$type,__name__:'reader'}
 
-$Reader.__enter__ = function(self){return self}
+$Reader.__enter__ = function(p, k){return p[0]}
 
-$Reader.__exit__ = function(self){return false}
+$Reader.__exit__ = function(p, k){return false}
         
-$Reader.__iter__ = function(self){return iter(self.$lines)}
+$Reader.__iter__ = function(p, k){return iter(p[0].$lines)}
 
-$Reader.__len__ = function(self){return self.lines.length}
+$Reader.__len__ = function(p, k){return p[0].lines.length}
 
 $Reader.__mro__ = [$Reader,$ObjectDict]
 
-$Reader.close = function(self){self.closed = true}
+$Reader.close = function(p, k){p[0].closed = true}
 
-$Reader.read = function(self,nb){
+$Reader.read = function(p, k){
+    var $=$B.argsfast('read', 2, {self:null, nb:null}, ['self', 'nb'],
+        p, k , {nb:-1}, null, null), 
+        self=$.self, nb=$.nb
     if(self.closed===true) throw _b_.ValueError('I/O operation on closed file')
-    if(nb===undefined) return self.$content
+    if(nb===-1) return self.$content
    
     self.$counter+=nb
     if(self.$bin){
@@ -1399,9 +1403,10 @@ $Reader.read = function(self,nb){
     return self.$content.substr(self.$counter-nb,nb)
 }
 
-$Reader.readable = function(self){return true}
+$Reader.readable = function(p, k){return true}
 
-$Reader.readline = function(self,limit){
+$Reader.readline = function(p, k){
+    var self = p[0]
     // set line counter
     self.$lc = self.$lc === undefined ? -1 : self.$lc
 
@@ -1416,25 +1421,28 @@ $Reader.readline = function(self,limit){
     return res
 }
 
-$Reader.readlines = function(self,hint){
+$Reader.readlines = function(p, k){
+    var self=p[0]
     if(self.closed===true) throw _b_.ValueError('I/O operation on closed file')
     self.$lc = self.$lc === undefined ? -1 : self.$lc
     return self.$lines.slice(self.$lc+1)
 }
 
-$Reader.seek = function(self,offset,whence){
+$Reader.seek = function(p, k){
+    var $=$B.argsfast(3, {self:null, offset:null, whence:null},
+        ['self', 'offset', 'whence'], p, k , {whence:0}, null, null),
+            self=$.self, offset=$.offset
     if(self.closed===True) throw _b_.ValueError('I/O operation on closed file')
-    if(whence===undefined) whence=0
-    if(whence===0){self.$counter = offset}
-    else if(whence===1){self.$counter += offset}
-    else if(whence===2){self.$counter = self.$content.length+offset}
+    if($.whence===0){self.$counter = offset}
+    else if($.whence===1){self.$counter += offset}
+    else if($.whence===2){self.$counter = self.$content.length+offset}
 }
 
-$Reader.seekable = function(self){return true}
+$Reader.seekable = function(){return true}
 
-$Reader.tell = function(self){return self.$counter}
+$Reader.tell = function(p, k){return p[0].$counter}
 
-$Reader.writable = function(self){return false}
+$Reader.writable = function(){return false}
 
 var $BufferedReader = {__class__:$B.$type,__name__:'_io.BufferedReader'}
 
@@ -1729,7 +1737,8 @@ var $FunctionDict = $B.$FunctionDict = {
     __name__:'function'
 }
 
-$FunctionDict.__getattribute__ = function(self, attr){
+$FunctionDict.__getattribute__ = function(p, k){
+    var self=p[0], attr=p[1]
     // Internal attributes __name__, __module__, __doc__ etc. 
     // are stored in self.$infos
     if(self.$infos && self.$infos[attr]!==undefined){
@@ -1746,7 +1755,7 @@ $FunctionDict.__getattribute__ = function(self, attr){
             return self.$infos[attr]
         }
     }else{
-        return _b_.object.$dict.__getattribute__(self, attr)
+        return _b_.object.$dict.__getattribute__([self, attr])
     }
 }
 $FunctionDict.__repr__=$FunctionDict.__str__ = function(self){

@@ -96,6 +96,7 @@ def test_next():
     if script_num < len(options):
         try:
             option = doc['files'].options[script_num]
+            print('option', option, option.value)
             src = open(option.value).read()
             doc['files'].selectedIndex = script_num
             editor.editor.setValue(src)
@@ -162,7 +163,7 @@ trans = {
     'run':{'en':'run','es':'ejecutar','fr':'exécuter'},
     'clear':{'en':'clear','es':'borrar','fr':'effacer'}
 }
-
+print(trans)
 
 for key in trans:
     if key in doc:

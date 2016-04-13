@@ -126,7 +126,8 @@ var $DOMEventDict = {__class__:$B.$type,__name__:'DOMEvent'}
 
 $DOMEventDict.__mro__ = [$DOMEventDict,$ObjectDict]
 
-$DOMEventDict.__getattribute__ = function(self,attr){
+$DOMEventDict.__getattribute__ = function(p, k){
+    var self=p[0], attr=p[1]
     switch(attr) {
       case 'x':
         return $mouseCoords(self).x
@@ -257,48 +258,61 @@ function $Options(parent){
 }
 var $OptionsDict = {__class__:$B.$type,__name__:'Options'}
 
-$OptionsDict.__delitem__ = function(self,arg){
+$OptionsDict.__delitem__ = function(p, k){
+    var self=p[0],arg=p[1]
     self.parent.options.remove(arg.elt)
 }
 
-$OptionsDict.__getitem__ = function(self,key){
+$OptionsDict.__getitem__ = function(p, k){
+    console.log('options getitem', p)
+    var self=p[0],key=p[1]
+    console.log(self.parent.options[key])
     return DOMNode(self.parent.options[key])
 }
     
-$OptionsDict.__len__ = function(self) {return self.parent.options.length}
+$OptionsDict.__len__ = function(p) {return p[0].parent.options.length}
 
 $OptionsDict.__mro__ = [$OptionsDict,$ObjectDict]
 
-$OptionsDict.__setattr__ = function(self,attr,value){
+$OptionsDict.__setattr__ = function(p, k){
+    var self=p[0],attr=p[1],value=p[2]
     self.parent.options[attr]=value
 }
 
-$OptionsDict.__setitem__ = function(self,attr,value){
+$OptionsDict.__setitem__ = function(p, k){
+    var self=p[0],attr=p[1],value=p[2]
     self.parent.options[attr]= $B.$JS2Py(value)
 }
 
-$OptionsDict.__str__ = function(self){
-    return "<object Options wraps "+self.parent.options+">"
+$OptionsDict.__str__ = function(p, k){
+    return "<object Options wraps "+p[0].parent.options+">"
 }
 
-$OptionsDict.append = function(self,element){
+$OptionsDict.append = function(p, k){
+    var self=p[0],element=p[1]
     self.parent.options.add(element.elt)
 }
 
-$OptionsDict.insert = function(self,index,element){
+$OptionsDict.insert = function(p, k){
+    var self=p[0],index=p[1],element=p[2]
     if(index===undefined){self.parent.options.add(element.elt)}
     else{self.parent.options.add(element.elt,index)}
 }
 
-$OptionsDict.item = function(self,index){
+$OptionsDict.item = function(p, k){
+    var self=p[0],index=p[1]
     return self.parent.options.item(index)
 }
     
-$OptionsDict.namedItem = function(self,name){
+$OptionsDict.namedItem = function(p, k){
+    var self=p[0],name=p[1]
     return self.parent.options.namedItem(name)
 }
     
-$OptionsDict.remove = function(self,arg){self.parent.options.remove(arg.elt)}
+$OptionsDict.remove = function(p, k){
+    var self=p[0],arg=p[1]
+    self.parent.options.remove(arg.elt)
+}
 
 //$OptionsDict.toString = $OptionsDict.__str__
     
@@ -307,7 +321,7 @@ var $StyleDict = {__class__:$B.$type,__name__:'CSSProperty'}
 $StyleDict.__mro__ = [$StyleDict,$ObjectDict]
 
 $StyleDict.__getattr__ = function(self,attr){
-    return $ObjectDict.__getattribute__(self.js,attr)
+    return $ObjectDict.__getattribute__([self.js,attr])
 }
 
 $StyleDict.__setattr__ = function(p, k){
@@ -419,7 +433,8 @@ DOMNodeDict.__eq__ = function(p){
     return p[0].elt===p[1].elt
 }
 
-DOMNodeDict.__getattribute__ = function(self,attr){
+DOMNodeDict.__getattribute__ = function(p, k){
+    var self=p[0], attr=p[1]
 
     switch(attr) {
       case 'class_name':
@@ -493,10 +508,11 @@ DOMNodeDict.__getattribute__ = function(self,attr){
         res = self.elt[attr]
         if(typeof res==="function"){
             var func = (function(f,elt){
-                return function(){
+                return function(p, k){
+                    console.log('call func for attr', attr)
                     var args = [], pos=0
-                    for(var i=0;i<arguments.length;i++){
-                        var arg=arguments[i]
+                    for(var i=0, len=p.length;i<len;i++){
+                        var arg=p[i]
                         if(isinstance(arg,JSObject)){
                             args[pos++]=arg.js
                         }else if(isinstance(arg,DOMNode)){
@@ -507,7 +523,8 @@ DOMNodeDict.__getattribute__ = function(self,attr){
                             args[pos++]=arg
                         }
                     }
-                    var result = f.apply(elt,args)
+                    console.log('apply', f, args)
+                    var result = f(args)
                     return $B.$JS2Py(result)
                 }
             })(res,self.elt)
@@ -518,7 +535,7 @@ DOMNodeDict.__getattribute__ = function(self,attr){
         if(attr=='style') return $Style(self.elt[attr])
         return $B.JSObject(self.elt[attr])
     }
-    return $ObjectDict.__getattribute__(self,attr)
+    return $ObjectDict.__getattribute__([self, attr])
 }
 
 DOMNodeDict.__getitem__ = function(p, k){
@@ -579,7 +596,7 @@ DOMNodeDict.__le__ = function(p, k){
     }
 }
 
-DOMNodeDict.__len__ = function(self){return self.elt.childNodes.length}
+DOMNodeDict.__len__ = function(p){return p[0].elt.childNodes.length}
 
 DOMNodeDict.__mul__ = function(self,other){
     if(isinstance(other,_b_.int) && other.valueOf()>0){
@@ -610,10 +627,9 @@ DOMNodeDict.__radd__ = function(p){ // add to a string
     return res
 }
 
-DOMNodeDict.__str__ = DOMNodeDict.__repr__ = function(self){
-    if(self===undefined) return "<class 'DOMNode'>"
-    
-    var res = "<DOMNode object type '"
+DOMNodeDict.__str__ = DOMNodeDict.__repr__ = function(p, k){
+    var self = p[0],
+        res = "<DOMNode object type '"
     return res+$NodeTypes[self.elt.nodeType]+"' name '"+self.elt.nodeName+"'>"
 }
 
@@ -645,6 +661,7 @@ DOMNodeDict.__setattr__ = function(p){
                     return
                 }
         }
+        console.log('domnode setattr', self.elt, attr, value)
         self.elt[attr]=value
     }
 }
@@ -907,8 +924,9 @@ DOMNodeDict.inside = function(self, other){
     }
 }
 
-DOMNodeDict.options = function(self){ // for SELECT tag
-    return new $OptionsClass(self.elt)
+DOMNodeDict.options = function(p){ // for SELECT tag
+    print('get attr options', p[0])
+    return new $OptionsClass(p[0].elt)
 }
 
 DOMNodeDict.parent = function(self){
@@ -1024,7 +1042,9 @@ DOMNodeDict.set_text = function(self,value){
     self.elt.textContent=str(value)
 }
 
-DOMNodeDict.set_value = function(self,value){self.elt.value = str(value)}
+DOMNodeDict.set_value = function(self, value){
+    self.elt.value = str(value);
+    }
 
 DOMNodeDict.submit = function(self){ // for FORM
     return function(){self.elt.submit()}

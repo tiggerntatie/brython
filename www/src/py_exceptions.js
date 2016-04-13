@@ -6,7 +6,8 @@ eval($B.InjectBuiltins())
 var $TracebackDict = {__class__:$B.$type,
     __name__:'traceback'
 }
-$TracebackDict.__getattribute__ = function(self, attr){
+$TracebackDict.__getattribute__ = function(p, k){
+    var self=p[0], attr=p[1]
     if(self.stack.length==0){alert('no stack', attr)}
     var last_frame = $B.last(self.stack)
     if(last_frame==undefined){alert('last frame undef ');console.log(self.stack, Object.keys(self.stack))}

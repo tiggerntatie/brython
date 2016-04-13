@@ -122,7 +122,7 @@ var pyobj2jsobj=$B.pyobj2jsobj=function(pyobj){
         // Python dictionaries are transformed into a Javascript object
         // whose attributes are the dictionary keys
         var jsobj = {}
-        var items = _b_.list(_b_.dict.$dict.items(pyobj))
+        var items = _b_.list(_b_.dict.$dict.items([pyobj]))
         for(var j=0, _len_j = items.length; j < _len_j;j++){
             jsobj[items[j][0]] = pyobj2jsobj(items[j][1])
         }
@@ -165,23 +165,25 @@ var $JSObjectDict = {
     toString:function(){return '(JSObject)'}
 }
 
-$JSObjectDict.__bool__ = function(self){
-    return (new Boolean(self.js)).valueOf()
+$JSObjectDict.__bool__ = function(p, k){
+    return (new Boolean(p[0].js)).valueOf()
 }
 
-$JSObjectDict.__delattr__ = function(self, attr){
+$JSObjectDict.__delattr__ = function(p, k){
+    var self=p[0], attr=p[1]
     _b_.getattr(self, attr) // raises AttributeError if necessary
     delete self.js[attr]
     return _b_.None
 }
 
-$JSObjectDict.__dir__ = function(self){
-    return Object.keys(self.js)
+$JSObjectDict.__dir__ = function(p, k){
+    return Object.keys(p[0].js)
 }
 
-$JSObjectDict.__getattribute__ = function(self,attr){
+$JSObjectDict.__getattribute__ = function(p, k){
+    var self=p[0],attr=p[1]
     if(attr.substr(0,2)=='$$') attr=attr.substr(2)
-    if(self.js===null) return $ObjectDict.__getattribute__(None,attr)
+    if(self.js===null) return $ObjectDict.__getattribute__([None,attr])
     if(attr==='__class__') return $JSObjectDict
     if(self.__class__===$JSObjectDict && attr=="$bind" && 
         self.js[attr]===undefined &&
@@ -196,22 +198,20 @@ $JSObjectDict.__getattribute__ = function(self,attr){
             // If the attribute of a JSObject is a function F, it is converted to a function G
             // where the arguments passed to the Python function G are converted to Javascript
             // objects usable by the underlying function F
-            var res = function(){
-                var args = [],arg
-                for(var i=0, _len_i = arguments.length; i < _len_i;i++){
-                    if(arguments[i].$nat!=undefined){
-                        //
-                        // Passing keyword arguments to a Javascript function
-                        // raises a TypeError : since we don't know the 
-                        // signature of the function, the result of Brython 
-                        // code like foo(y=1, x=2) applied to a JS function 
-                        // defined by function foo(x, y) can't be determined.
-                        //
-                        throw TypeError("A Javascript function can't "+
-                            "take keyword arguments")
-                    }else{
-                        args.push(pyobj2jsobj(arguments[i]))
-                    }
+            var res = function(p, k){
+                var args = []
+                if(k!==undefined && k.length>0){
+                    // Passing keyword arguments to a Javascript function
+                    // raises a TypeError : since we don't know the 
+                    // signature of the function, the result of Brython 
+                    // code like foo(y=1, x=2) applied to a JS function 
+                    // defined by function foo(x, y) can't be determined.
+                    //
+                    throw TypeError("A Javascript function can't "+
+                        "take keyword arguments")
+                }
+                for(var i=0, len = p.length; i < len;i++){
+                    args.push(pyobj2jsobj(p[i]))
                 }
                 // IE workaround
                 if(attr === 'replace' && self.js === location) {
@@ -267,7 +267,8 @@ $JSObjectDict.__getattribute__ = function(self,attr){
     }
 }
 
-$JSObjectDict.__getitem__ = function(self,rank){
+$JSObjectDict.__getitem__ = function(p, k){
+    var self=p[0],rank=p[1]
     if(typeof self.js.length=='number' &&
         typeof self.js.item=='function'){
             var rank_to_int = _b_.int(rank)
@@ -284,8 +285,9 @@ $JSObjectDict.__getitem__ = function(self,rank){
 }
 
 var $JSObject_iterator = $B.$iterator_class('JS object iterator')
-$JSObjectDict.__iter__ = function(self){
-    var items = []
+$JSObjectDict.__iter__ = function(p){
+    var self=p[0],
+        items = []
     if(window.Symbol && self.js[Symbol.iterator]!==undefined){
         // Javascript objects that support the iterable protocol, such as Map
         // For the moment don't use "for(var item of self.js)" for 
@@ -312,7 +314,8 @@ $JSObjectDict.__iter__ = function(self){
     return _b_.dict.$dict.__iter__(_dict)
 }
 
-$JSObjectDict.__len__ = function(self){
+$JSObjectDict.__len__ = function(p){
+    var self=p[0]
     if(typeof self.js.length=='number'){return self.js.length}
     try{return getattr(self.js,'__len__')()}
     catch(err){
@@ -322,9 +325,11 @@ $JSObjectDict.__len__ = function(self){
 
 $JSObjectDict.__mro__ = [$JSObjectDict,$ObjectDict]
 
-$JSObjectDict.__repr__ = function(self){return "<JSObject wraps "+self.js+">"}
+$JSObjectDict.__repr__ = function(p){return "<JSObject wraps "+p[0].js+">"}
 
-$JSObjectDict.__setattr__ = function(self,attr,value){
+$JSObjectDict.__setattr__ = function(p, k){
+    var self=p[0],attr=p[1],value=p[2]
+    console.log('set attr', self, attr, value)
     if(isinstance(value,JSObject)){self.js[attr]=value.js}
     else{
         self.js[attr]=value
@@ -364,7 +369,7 @@ $JSObjectDict.bind = function(self, evt, func){
             throw $B.exception(err)
         }
     }
-    return $JSObjectDict.__getattribute__(self, 'addEventListener').js(evt, f)
+    return $JSObjectDict.__getattribute__([self, 'addEventListener']).js(evt, f)
 }
 
 $JSObjectDict.to_dict = function(self){

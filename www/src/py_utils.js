@@ -660,6 +660,7 @@ $B.$setitem = function(obj,item,value){
         obj.__class__.__setitem__([obj, item, value])
         return
     }
+    console.log('set item of', obj)
     _b_.getattr(obj,'__setitem__')([item,value])
 }
 // augmented item
