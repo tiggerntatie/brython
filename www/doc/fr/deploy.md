@@ -1,15 +1,31 @@
-Déployer une application Brython sur un serveur
------------------------------------------------
+Déployer une application Brython
+--------------------------------
 
-Pour le déploiement sur un serveur web accessible aux utilisateurs de votre application, vous n'avez pas à installer tout l'environnement de développement
+Votre application peut être déployée en transférant l'ensemble du répertoire
+sur un serveur.
 
-Dans la [page de téléchargement](https://github.com/brython-dev/brython/releases), choisissez une des archives  (zip, gz or bz2) appelées _BrythonX.Y.Z-YYYYMMDD-HHMMSS_ (X.Y.Z est le numéro de version) ; décompressez-la et téléchargez ses fichiers dans le répertoire dans lequel vous voulez installer votre application. Il ne contient que la distribution Brython : _brython.js_ et les librairies intégrées dans les répertoires _libs_ et _Lib_
+Depuis la version 3.4.0 il est aussi possible de déployer une application
+Brython en utilisant le même outil que pour les packages Python, à savoir `pip`.
 
-Déployer sans installation
---------------------------
+Pour cela, il faut récupérer le package Brython (`pip install brython`),
+ouvrir une console système et dans le répertoire de l'application faire :
 
-Une option encore plus simple est de ne rien installer sur le serveur, mais d'appeler tout l'environnement Python depuis le site brython.info :
+    python -m brython --make_dist
 
-    <script src="http://brython.info/src/brython_dist.js"></script>
+Lors de la première exécution de la commande, l'utilisateur doit entrer les
+informations essentielles pour l'application (nom, numéro de version, etc).
+Ces données sont stockées dans un fichier __brython_setup.json__ qui peut
+être édité ultérieurement.
 
-L'inconvénient de cette méthode est la taille relativement importante de la distribution, qui inclut la bibliothèque standard
+La commande crée un sous-répertoire __\_\_dist\_\___ dans lequel se trouve un
+script __setup.py__ qui permet de créer un package pour l'application, et de
+le déployer sur le Python Package Index.
+
+Les utilisateurs peuvent ensuite installer ce package CPython par la commande
+habituelle:
+
+    pip install <nom_application>
+
+et installer l'application Brython dans un répertoire par:
+
+    python -m <nom_application> --install

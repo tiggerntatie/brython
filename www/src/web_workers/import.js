@@ -6,7 +6,7 @@ self.addEventListener('message', function (e) {
     //importScripts('brython.js')
     importScripts('/src/brython_builtins.js', '/src/version_info.js',
         '/src/py2js.js',
-        '/src/py_object.js', '/src/py_type.js', '/src/py_utils.js',
+        '/src/py_object.js', '/src/py_type.js', '/src/py_utils.js','/src/py_sort.js',
         '/src/py_builtin_functions.js', '/src/py_set.js',
         '/src/js_objects.js',
         '/src/py_import.js', '/src/py_int.js', '/src/py_float.js',
@@ -105,7 +105,7 @@ self.addEventListener('message', function (e) {
                     }
                 } catch (err) {
                     //console.log(err)
-                    if (err.__name__ !== "FileNotFoundError") {
+                    if (err.__class__.__name__ !== "FileNotFoundError") {
                         flag = true;
                         throw err
                     }
@@ -125,7 +125,7 @@ self.addEventListener('message', function (e) {
         }
 
         if (!flag) {
-            throw __BRYTHON__.builtins.ImportError("module " + module.name +
+            throw __BRYTHON__.builtins.ImportError.$factory("module " + module.name +
                                                    " not found")
         }
     }
@@ -176,7 +176,7 @@ self.addEventListener('message', function (e) {
             try {
                 return import_funcs[j](module, origin)
             } catch (err) {
-                if (err.__name__ === "FileNotFoundError") {
+                if (err.__class__.__name__ === "FileNotFoundError") {
                     if (j == import_funcs.length - 1) {
                         throw err
                     } else {

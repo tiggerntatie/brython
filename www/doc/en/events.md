@@ -9,46 +9,101 @@ from browser import alert
 Introduction
 ------------
 
-Suppose we have in a page a element of type button, like this one : <button>a button</button>
+Suppose we have in a page a element of type button, like this one :
+ <button>a button</button>
 
-If you click on it, nothing will happen, because no instruction was given on how to react to a click. For that, the action to take is defined by this syntax :
+If you click on it, nothing will happen, because no instruction was given on
+how to react to a click. For that, the action to take is defined by this
+syntax :
 
->    btn.bind('click', show)
+```python
+def show(ev):
+    ...
 
-The first argument of `bind` is the type of event the button must handle ; the second is a function that takes a single argument, an instance of the class `DOMEvent`. For instance :
+btn.bind("click", show)
+```
 
->    def show(ev):
->        print('ok !')
+`btn` is a reference to the lement. The arguments of `bind` are the type of
+event the button must handle, and the function to call when this event occurs.
+The following pages give many examples of such events for mouse, keyboard,
+drag-and-drop, etc.
+
+The callback function takes a single argument, an instance of the class
+`DOMEvent` defined in module **browser**. For instance :
+
+```python
+def show(ev):
+    print('ok')
+
+btn.bind("click", show)
+```
 
 (remember that to see the results of `print` the browser console must be open)
 
-Instances of `DOMEvent` have a number of attributes that depend on the event type. In the case of a click, and more generally for events related to the mouse, the attributes include
+Instances of `DOMEvent` have a number of attributes that depend on the event
+type. In the case of a click, and more generally for events related to the
+mouse, the attributes include
 
 - `target` : the element the event was dispatched on
 - `x, y` : position of the mouse relatively to the upper left corner of the window
 
 For instance, to print the button text and the mouse position :
 
->    def show(ev):
->        print(ev.target.text, ev.x, ev.y)
+```python
+def show(ev):
+    print(ev.target.text, ev.x, ev.y)
+
+btn.bind("click", show)
+```
 
 Interface
 ---------
 For events management, the elements of a page have the following methods :
 
-<code>elt.bind(_evt\_name, handler_)</code>
+<code>elt.bind(_evt_name, handler_)</code>
 
-> associates function _handler_ to the event named _evt\_name_
+> the _handler_ function is called when the event _event_name_ occurs on the
+> element
 
 <code>elt.unbind(_evt\_name[, handler_])</code>
 
-> removes the association of function _handler_ to the event named 
-> _evt\_name_. If _handler_ is omitted, removes all the associations for the 
+> removes the association of function _handler_ to the event named
+> _evt\_name_. If _handler_ is omitted, removes all the associations for the
 > event
 
 <code>elt.events(_evt\_name_)</code>
 
 > returns the list of functions that handle the event named _evt\_name_
+
+Using the decorator `browser.bind`
+----------------------------------
+_New in version 3.6.0_
+
+The **browser** module defines a function `bind` that can be used as a
+decorator for an event handler. Its syntax is
+
+<code>@bind(_target, evt_)</code>
+
+If _target_ is a `DOMNode` instance, the decorated function handles the
+event _evt_ on this element.
+
+If _target_ is a string, it is interpreted as a CSS selector ; for all
+the elements in the page that match this selector, the event _evt_ is
+managed by the decorated function.
+
+Examples:
+
+```python
+from browser import document, bind
+
+@bind(document[element_id], "mouseover")
+def mouseover(ev):
+    ...
+
+@bind("div.foo", "enter") # all the DIV elements with attribute class="foo"
+def enter(ev):
+    ...
+```
 
 `DOMEvent` objects
 ------------------
@@ -68,7 +123,7 @@ Whatever the event type, instances of class `DOMEvent` have the following attrib
 <script type="text/python">
 from browser import document, alert
 
-document['_bubbles'].bind('click',lambda ev:alert('bubbles : %s ' %ev.bubbles))
+document["_bubbles"].bind("click", lambda ev:alert("bubbles : %s " %ev.bubbles))
 </script>
 </td>
 </tr>
@@ -83,7 +138,7 @@ document['_bubbles'].bind('click',lambda ev:alert('bubbles : %s ' %ev.bubbles))
 <script type="text/python">
 from browser import document, alert
 
-document['_cancelable'].bind('click',lambda ev:alert('cancelable : %s ' %ev.cancelable))
+document["_cancelable"].bind("click", lambda ev:alert("cancelable : %s " %ev.cancelable))
 </script>
 </td>
 </tr>
@@ -98,7 +153,8 @@ document['_cancelable'].bind('click',lambda ev:alert('cancelable : %s ' %ev.canc
 <script type="text/python">
 from browser import document, alert
 
-document['_currentTarget'].bind('click',lambda ev:alert('currentTarget : %s ' %ev.currentTarget))
+document["_currentTarget"].bind("click",
+    lambda ev: alert("currentTarget : %s " %ev.currentTarget))
 </script>
 </td>
 </tr>
@@ -113,7 +169,8 @@ document['_currentTarget'].bind('click',lambda ev:alert('currentTarget : %s ' %e
 <script type="text/python">
 from browser import document, alert
 
-document['_defaultPrevented'].bind('click',lambda ev:alert('defaultPrevented : %s ' %ev.defaultPrevented))
+document["_defaultPrevented"].bind("click",
+    lambda ev:alert("defaultPrevented : %s " %ev.defaultPrevented))
 </script>
 </td>
 </tr>
@@ -128,7 +185,8 @@ document['_defaultPrevented'].bind('click',lambda ev:alert('defaultPrevented : %
 <script type="text/python">
 from browser import document, alert
 
-document['_eventPhase'].bind('click',lambda ev:alert('eventPhase : %s ' %ev.eventPhase))
+document["_eventPhase"].bind("click",
+    lambda ev:alert("eventPhase : %s " %ev.eventPhase))
 </script>
 </td>
 </tr>
@@ -136,27 +194,31 @@ document['_eventPhase'].bind('click',lambda ev:alert('eventPhase : %s ' %ev.even
 <tr>
 <td>
 `target`
-> `DOMNode` instance ; the object the event was dispatched on. It is different than `event.currentTarget` when the event handler is called in bubbling or capturing phase of the event
+> `DOMNode` instance ; the object the event was dispatched on. It is different
+> from `event.currentTarget` when the event handler is called in bubbling or
+> capturing phase of the event
 </td>
 <td>
 <button id="_target">test</button>
 <script type="text/python">
 from browser import document, alert
 
-document['_target'].bind('click',lambda ev:alert('target : %s ' %ev.target))
+document["_target"].bind("click", lambda ev:alert("target : %s " %ev.target))
 </script>
 </td>
 </tr>
 
 <tr><td>`timeStamp`
-> integer, the time (in milliseconds since Jan. 1st, 1970 at 0h) at which the event was created
+> integer, the time (in milliseconds from the beginning of the current
+> document's lifetime) at which the event was created
 </td>
 <td>
 <button id="_timeStamp">test</button>
 <script type="text/python">
 from browser import document, alert
 
-document['_timeStamp'].bind('click',lambda ev:alert('timeStamp : %s ' %ev.timeStamp))
+document["_timeStamp"].bind("click",
+    lambda ev: alert("timeStamp : %s " %ev.timeStamp))
 </script>
 </td>
 </tr>
@@ -169,7 +231,7 @@ document['_timeStamp'].bind('click',lambda ev:alert('timeStamp : %s ' %ev.timeSt
 <script type="text/python">
 from browser import document, alert
 
-document['_type'].bind('click',lambda ev:alert('type : %s ' %ev.type))
+document["_type"].bind("click", lambda ev:alert("type : %s " %ev.type))
 </script>
 </td>
 </tr>
@@ -183,32 +245,27 @@ and the following methods
 
 > **Example**
 
-> When a checkbox is clicked on, the default action is to show or hide a tick inside the checkbox : 
+> When a checkbox is clicked on, the default action is to show or hide a tick inside the checkbox :
 
 >> checkbox (default behaviour) <input type="checkbox">
 
-> To disable this behaviour on the checkbox : 
+> To disable this behaviour on the checkbox :
 
 <blockquote>
-<div id="disable_cbox">
-    from browser import document
+```exec_on_load
+from browser import document
 
-    def _cancel(ev):
-        ev.preventDefault()
-    
-    document["disabled_cbox"].bind('click',_cancel)
-</div>
+def _cancel(ev):
+    ev.preventDefault()
+
+document["disabled_cbox"].bind("click",_cancel)
+```
 </blockquote>
 
 >> result :
 
 >> disabled checkbox <input type="checkbox" id="disabled_cbox">
 
-<script type="text/python">
-from browser import document
-
-exec(document["disable_cbox"].text)
-</script>
 
 `stopPropagation()`
 > prevents further propagation of the current event
@@ -225,44 +282,58 @@ exec(document["disable_cbox"].text)
 > the 3 elements (the outer yellow frame and the inner blue and green frames) handle the click event
 
 <blockquote>
-<div id="zzz_source">
-    from browser import document, alert
-    
-    def show(ev):
-        alert('click on %s' %ev.currentTarget.id)
-    
-    def show_stop(ev):
-        alert('clic on %s' %ev.currentTarget.id)
-        ev.stopPropagation()
-    
-    document["yellow"].bind('click',show)
-    document["blue"].bind('click',show)
-    document["green"].bind('click',show_stop)
-</div>
+```exec_on_load
+from browser import document, alert
+
+def show(ev):
+    alert("click on %s" %ev.currentTarget.id)
+
+def show_stop(ev):
+    alert("clic on %s" %ev.currentTarget.id)
+    ev.stopPropagation()
+
+document["yellow"].bind("click",show)
+document["blue"].bind("click",show)
+document["green"].bind("click",show_stop)
+```
 </blockquote>
 
-> Clicking on the yellow zone triggers the call of function `show()`, which prints the message "click on yellow"
+> Clicking on the yellow zone triggers the call of function `show()`, which
+> prints the message "click on yellow".
 
-> A click on the blue zone triggers the alert message "click on blue". Then the event propagates to the parent, the yellow frame. Since this frame also handles the event "click", the browser calls the associated action, the same function `show()`, and shows the message "click on yellow" (notice that the attribute `currentTarget` is updated when the event propagates)
+> A click on the blue zone triggers the alert message "click on blue". Then
+> the event propagates to the parent, the yellow frame. Since this frame also
+> handles the event "click", the browser calls the associated action, the same
+> function `show()`, and shows the message "click on yellow" (notice that the
+> attribute `currentTarget` is updated when the event propagates).
 
-> Clicking on the green zone cause the message "click on green" to pop up. This event is handled by the function `show_stop()`, which ends in
+> Clicking on the green zone cause the message "click on green" to pop up.
+> This event is handled by the function `show_stop()`, which ends in
 
 >>    ev.stopPropagation()
 
-> So the event does not propagate to the upper level and the execution exits without an alert box "click on yellow"
-
-
-<script type="text/python">
-from browser import document
-
-eval(document["zzz_source"].text)
-</script>
+> So the event does not propagate to the upper level and the execution exits
+> without an alert box "click on yellow".
 
 Creating and firing an event
 ----------------------------
 
-`DOMEvent(`_evt\_name_`)` 
-> Creates an event of type _evt\_name_ such as _keydown, mousemove_, etc.
+If you want to fire an event on an element, first check the
+[Event reference](https://developer.mozilla.org/en-US/docs/Web/Events) ; for
+instance, the event "click" uses the DOM interface `MouseEvent`, available
+in Brython by `window.MouseEvent`.
 
-`element.dispatchEvent(`event`)`
-> Fires the event on the specified `element`
+`MouseEvent` is a constructor, so to create the event object use its
+attribute `new` :
+
+```python
+event = window.MouseEvent.new("click")
+```
+
+then
+
+```python
+element.dispatchEvent(event)
+```
+
+fires the event on the specified element.

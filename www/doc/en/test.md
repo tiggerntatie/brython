@@ -1,7 +1,7 @@
 
 
-Testing and debugging
----------------------
+Testing, debugging and profiling
+--------------------------------
 
 ### Interactive test
 
@@ -10,7 +10,6 @@ The Brythons site, or its mirror available for download, include a console where
 Please note that the namespace is not refreshed when you click on "run", you must reload the page for that
 
 For debugging and testing Brython, a number of test scripts are grouped in the directory `tests` ; you can access them by clicking the link  "Test pages" in the console, then select the different tests and run them
-
 
 ### Debugging scripts
 
@@ -42,9 +41,9 @@ generates :
 
 ### Debugging Javascript Generated Python Code
 
-> TL;DR if you want to use the browser builtin debugger to step through your python js code write `__debugger__` in your code and open the developer tools.
+> TL;DR if you want to use the browser builtin debugger to step through your python Javascript code write `__debugger__` in your code and open the developer tools.
 
-This statement is equivalent to the javascript `debugger` statement.
+This statement is equivalent to the Javascript `debugger` statement.
 
 Modern browsers such as FireFox and Google Chrome have built in debuggers, these debuggers allow developers to step through the code stepping into function calls and out (you know like debuggers in IDEs)
 
@@ -61,7 +60,7 @@ to learn more about the chrome developer tools visit their documentation or this
 
 ### Debugging Python Code
 
-A simple time-travel step back and forth debugger is implimented [here](../../tests/debugger.html)
+A simple time-travel step back and forth debugger is implemented [here](../../tests/debugger.html)
 
 As of this writing it is not full featured and supports only line step.
 You will find documentation on how each function in the debugger works (in case you want to build on it)
@@ -106,10 +105,10 @@ The following is the debugger public API you can find more details description i
 
 
 **Brython_Debugger**.`start_debugger()`
-> start the debugging session, takes code to debug as parameter as well as an optional boolean flag for whether to live debug or record. Currently live debug is not supported and debugging by default starts in record mode.  The on_debugging_started callback is called at the end of this step
+> start the debugging session, takes code to debug as parameter as well as an optional boolean flag for whether to live debug or record. Currently live debug is not supported and debugging by default starts in record mode.  The `on_debugging_started` callback is called at the end of this step
 
 **Brython_Debugger**.`stop_debugger()`
-> function to call when you want to stop the debugging session on_debugging_end is called at this step
+> function to call when you want to stop the debugging session `on_debugging_end` is called at this step
 
 **Brython_Debugger**.`step_debugger()`
 > This function when called steps forward one step in the recorded debugging session
@@ -145,7 +144,7 @@ The following is the debugger public API you can find more details description i
 > returns all recorded states
 
 **Brython_Debugger**.`set_trace_limit(Number)`
-> The maximum number of steps executed before the debugger halts, defult 10000
+> The maximum number of steps executed before the debugger halts, default 10000
 
 **Brython_Debugger**.`set_trace(obj)`
 > object should contain the data you want paced later to the set_trace function
@@ -166,3 +165,84 @@ The following is the debugger public API you can find more details description i
 
 **Brython_Debugger**.`on_step_update(cb)`
 > cb is called whenever a state is changed using setState
+
+### Profiling scripts
+
+To enable profiling one has to pass the "profile" option to the brython function:
+
+> brython({'profile':1})
+
+When the `profile` option is > 0 the compiler adds additional code to the generated
+javascript which collects profiling information. To `profile` module provides access
+to this information. It strives to provide an interface largely similar to the `profile`
+module from the standard python distribution.
+
+The notable difference is that it does not allow user-defined timers and does not
+do any calibration. Methods which in the standard module save the data to a file
+save a JSON-serialized version of the data to the browser's local storage instead.
+
+#### Basic usage:
+
+>       from profile import Profile
+>
+>       p = Profile()
+>       p.enable()
+>       do_something()
+>       do_something_else()
+>       p.create_stats()
+
+Which will print out something like:
+
+>           1 run in 0.249 seconds
+>
+>       Ordered by: standard name (averaged over 1 run)
+>
+>       ncalls  tottime  percall  cumtime  var percall  module.function:lineno
+>        101/1    0.023    0.000    1.012        0.010               .fact:180
+
+where each line corresponds to a function and the different columns correspond  to
+
+    ncalls      is the total number number of times the function was called
+                (if the function was called non-recursively, the second number
+                behind the backslash indicates how many calls were top-level calls
+                in the recursion)
+
+    tottime     is the total time (in seconds) spent in the function not including subcalls
+
+    percall     is the average time spent in the function per call, not including subcalls
+
+    cumtime     is the total time spent in function including subcalls
+
+    var percall is the average time spent in function per one non-recursive call
+
+    standard name is the name of the function in the form module.function_name:line_number
+
+Optionally one can also use the following form, taking advantage of running the code
+several times and averaging it out:
+
+>       from profile import Profile
+>
+>       p = Profile()
+>       p.call(function_to_profile,200,arg1,arg2,kwarg1=v1)
+
+which will print out something like:
+
+>           200 runs in 0.249 seconds
+>
+>       Ordered by: standard name (averaged over 1 run)
+>
+>       ncalls  tottime  percall  cumtime  var percall  module.function:lineno
+>        101/1    0.023    0.000    1.012        0.010  function_to_profile:16
+
+Collected profile data can be saved to local storage for later use:
+
+>        p.dump_stats('run1')
+
+Profile data can also be read back:
+
+>        data = Stats('run1')
+
+And aggregated together
+
+>        data.add(p.dump_stats())
+>        print(data)

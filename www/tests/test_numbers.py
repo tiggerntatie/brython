@@ -22,7 +22,7 @@ assert 7.0 / 2 == 3.5
 
 y=3.14
 assert y.__class__ == float
-assert isinstance(3.14,float)
+assert isinstance(3.14, float)
 assert str(y)=="3.14"
 
 x = -3
@@ -33,6 +33,12 @@ assert x.__ceil__() == x
 assert x.__ceil__() == -3
 
 assert x.__divmod__(2) == (-2, 1)
+
+# issue 564
+x = 2
+assert isinstance(.5 * x, float)
+assert isinstance(1.0 + x, float)
+assert isinstance(3.0 - x, float)
 
 # complex numbers
 x = 8j
@@ -58,6 +64,9 @@ assert 3.0*a == 12+6j
 assert abs(3 + 4j) == 5
 assert abs(4 + 3j) == 5.0
 assert abs(4 + 3j) == abs(3 + 4j)
+
+# issue 498
+assert (1+2j)*2.4 == 2.4 + 4.8j
 
 assert hash(1.0) == 1
 
@@ -111,5 +120,97 @@ assert int('3aokq94', 33) == 4294967296
 assert int('2qhxjli', 34) == 4294967296
 assert int('2br45qb', 35) == 4294967296
 assert int('1z141z4', 36) == 4294967296
+
+# float subclass
+class Float(float):
+
+    def __eq__(self, other):
+        if not float.__eq__(self, other) and self.almost_equal(other):
+            raise FloatCompError('you probably meant almost equal')
+        return float.__eq__(self, other)
+
+    def almost_equal(self, other):
+        return abs(self - other) < 10**-8
+
+class FloatCompError(Exception):
+    pass
+
+assert str(Float(0.3)) == "0.3"
+assert Float(0.1) + Float(0.1) == Float(0.2)
+
+float_sum = Float(0.1) + Float(0.1) + Float(0.1)
+assert Float(0.3).almost_equal(float_sum)
+try:
+    Float(0.3) == float_sum
+    raise Exception("should have raised FloatCompError")
+except FloatCompError:
+    pass
+
+# issue 840
+x = 123 ** 20
+y = 123 ** 20
+assert (id(x) != id(y) or x is y)
+
+# PEP 515
+from tester import assertRaises
+
+population = 65_345_123
+assert population == 65345123
+
+population = int("65_345_123")
+assert population == 65345123
+
+assertRaises(ValueError, int, "_12000")
+
+amount = 10_000_000.0
+assert amount == 10000000.0
+
+addr = 0xCAFE_F00D
+assert addr == 0xCAFEF00D
+
+flags = 0b_0011_1111_0100_1110
+assert flags == 0b0011111101001110
+
+flags = int('0b_1111_0000', 2)
+assert flags == 0b11110000
+
+assert complex("8_7.6+2_67J") == (87.6+267j)
+assertRaises(ValueError, complex, "_8_7.6+2_67J")
+assertRaises(ValueError, complex, "8_7.6+_2_67J")
+
+# issue 955
+x = True
+
+try:
+    x.real = 2
+    raise Exception("should have raised AttributeError")
+except AttributeError as exc:
+    assert "is not writable" in exc.args[0]
+
+try:
+    x.foo = "a"
+    raise Exception("should have raised AttributeError")
+except AttributeError as exc:
+    assert "has no attribute 'foo'" in exc.args[0]
+
+# issue 967
+assert not (True == "Toggle")
+assert True == True
+assert True == 1
+assert not (True == 8)
+assert True == 1.0
+assert not (True == 1.1)
+assert not (False == "Toggle")
+assert False == False
+assert False == 0
+assert False == 0.0
+assert not (False == 8)
+
+# issue 982
+try:
+    int("0x505")
+    raise Exception("should have raised ValueError")
+except ValueError:
+    pass
 
 print('passed all tests...')

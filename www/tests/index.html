@@ -1,7 +1,10 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
+<link rel="stylesheet" type="text/css"
+      href="https://fonts.googleapis.com/css?family=Montserrat">
+
 <link rel="stylesheet" href="../doc/doc_brython.css">
 
 <link rel="stylesheet" href="console.css">
@@ -12,12 +15,14 @@
 <script src="ace/snippets/python.js" type="text/javascript" charset="utf-8"></script>
 
 
+<script type="text/javascript" src="../src/unicode.min.js"></script>
 <script type="text/javascript" src="../src/brython_builtins.js"></script>
 <script type="text/javascript" src="../src/version_info.js"></script>
 <script type="text/javascript" src="../src/py2js.js"></script>
 <script type="text/javascript" src="../src/py_object.js"></script>
 <script type="text/javascript" src="../src/py_type.js"></script>
 <script type="text/javascript" src="../src/py_utils.js"></script>
+<script type="text/javascript" src="../src/py_sort.js"></script>
 <script type="text/javascript" src="../src/py_builtin_functions.js"></script>
 <script type="text/javascript" src="../src/py_exceptions.js"></script>
 <script type="text/javascript" src="../src/py_range_slice.js"></script>
@@ -43,52 +48,25 @@
 
 <!-- Javascript code needed to run tests included in dom.py -->
 <script src="dom_js_tests.js"></script>
+<script src="jsobj_tests.js"></script>
 
-<script>
-var modules = []
-function size(){
-    var keys = Object.keys(__BRYTHON__.modules)
-    console.log(keys.length, 'modules')
-    if(modules.length>0){
-        for(var i=0;i<keys.length;i++){
-            if(modules.indexOf(keys[i])==-1){
-                console.log('nouveau', keys[i])
-            }
-        }
-    }
-    modules = Object.keys(__BRYTHON__.modules)
-}
+<script type="text/javascript" src="../src/brython_stdlib.js"></script>
 
-function attrs(){
-    var infos = []
-    for(var attr in __BRYTHON__){
-        if(typeof __BRYTHON__[attr]=='object'){
-            infos.push([Object.keys(__BRYTHON__[attr]).length, attr])
-        }
-    }
-    infos.sort(function(a,b){
-        if(a[0]>b[0]){return 1}
-        else if(a[0]==b[0]){return 0}
-        return -1
-    }
-    )
-    for(var i=0;i<infos.length;i++){
-        console.log(infos[i])
-    }
-    console.log(Object.keys(__BRYTHON__).length, 'attributes')
-}
-</script>
 <script type="text/python3" id="tests">
+import asyncio
 import time
 import sys
 import traceback
 import dis
 
-from browser import document as doc, window, alert, console, prompt
+from browser import document as doc, window, alert, console, prompt, bind
 from browser import timer
 from browser.local_storage import storage
 
 import editor, brython_test_utils as utils
+import async_manager
+
+aio = async_manager.AsyncTestManager()
 
 utils.populate_testmod_input(doc['files'],
     ["Core language features", "Issues", "DOM interface", "Modules"])
@@ -97,41 +75,67 @@ script_num = -1
 failed = []
 t_start = None
 
+global_loop = asyncio.new_event_loop()
+
+@asyncio.run_async(loop=global_loop)
 def run():
     global output
-    doc["console"].value = ''
+    import sys
     src = editor.editor.getValue()
     if storage is not None:
        storage["py_src"] = src
-
     state, t0, t1, _ = utils.run(src)
+    sys.stdout.flush()
     output = doc["console"].value
-
-    print('<completed in %6.2f ms>' % ((t1 - t0) * 1000.0))
+    print('<sync tests completed in %6.2f ms>' % ((t1 - t0) * 1000.0))
+    sys.stdout.flush()
+    if aio.count_tests(pending_only=True) > 0:
+        print('<async tests pending {pending} (out of {total})>'.format(
+                pending=aio.count_tests(pending_only=True),
+                total=aio.count_tests()))
+    sys.stdout.flush()
+    yield from aio.finish()
+    aio.print_results()
+    if aio.failed:
+        state = 0
+    if state == 0:
+        print('<completed in %6.2f ms (FAILED)>' % ((time.perf_counter() - t0) * 1000.0))
+    else:
+        print('<completed in %6.2f ms (OK)>' % ((time.perf_counter() - t0) * 1000.0))
+    sys.stdout.flush()
     #window.attrs()
+
     return state
 
+@asyncio.run_async(loop=global_loop)
 def test_next():
-    global script_num,failed
+    global script_num, failed
+    import sys
     script_num += 1
     options = doc['files'].options
     if script_num < len(options):
         try:
             option = doc['files'].options[script_num]
+            doc["console"].value = ''
+            print('Running tests in', option.innerText)
+            sys.stdout.flush()
             src = open(option.value).read()
             doc['files'].selectedIndex = script_num
             editor.editor.setValue(src)
-            state = run()
+            state = yield from run()
             if state == 0:
                 failed.append(option.text)
-            timer.set_timeout(test_next,500)
+            sys.stdout.flush()
+            global_loop.call_later(0.5, test_next)
         except Exception as exc:
             traceback.print_exc(file=sys.stderr)
     else:
         doc['console'].value = ''
         print('completed all tests in %.2f s' %(time.time()-t_start))
         print('failed : %s' %failed)
-    
+    sys.stdout.flush()
+
+@bind("#test_all", "click")
 def test_all(ev):
     global script_num,failed,t_start
     script_num = -1
@@ -139,41 +143,28 @@ def test_all(ev):
     failed = []
     test_next()
 
+@bind("#set_debug", "change")
 def set_debug(ev):
     if ev.target.checked:
         __BRYTHON__.debug = 1
     else:
         __BRYTHON__.debug = 0
 
-def set_loop_timeout(ev):
-    if ev.target.checked:
-        timeout = prompt('Loop timeout, in seconds')
-        try:
-            __BRYTHON__.loop_timeout = int(timeout)
-            doc['timeout_value'].text = '%s s.' %timeout
-        except:
-            alert('Invalid value for timeout : %s' %timeout)
-    else:
-        __BRYTHON__.loop_timeout = False
-        doc['timeout_value'].text = ''
-
 __BRYTHON__.debug = int(doc['set_debug'].checked)
 
 # bindings
-doc['test_all'].bind('click',test_all)
-doc['set_debug'].bind('change',set_debug)
-
 doc['show_js'].bind('click',editor.show_js)
 doc['run'].bind('click',lambda ev:run())
 doc['show_console'].bind('click',editor.show_console)
 doc['files'].bind('change',editor.load_script)
-doc['set_loop_timeout'].bind('change',set_loop_timeout)
 </script>
 
 <script type="text/python3" id="translations">
 from browser import document as doc
 import header
-qs_lang,language = header.show('../')
+
+qs_lang,language = header.show()
+
 # other translations
 
 trans = {
@@ -200,9 +191,12 @@ for key in trans:
 
 <body onload="brython({debug:1, cache:'none', static_stdlib_import:true})">
 
+<!-- HTML needed to run tests included in dom.py -->
+<div id="dom-test-element-id"></div>
+
 <table id=banner cellpadding=0 cellspacing=0>
 <tr id=banner_row >
-<td class="logo"><a href="../index.html"><img src="../brython.png" class="logo"></a></td>
+<td class="logo"><a href="../index.html"><img src="../brython_tp.png" class="logo"></a></td>
 </tr>
 </table>
 
@@ -229,8 +223,6 @@ Test:
   <div style="float:left">
     <button id="run">run</button>
     debug<input type="checkbox" id="set_debug" checked>
-    loop timeout<input type="checkbox" id="set_loop_timeout" autocomplete="off">
-    <span id="timeout_value"></span>
   </div>
   <div style="float:right">
     <button id="show_console">Show console</button>

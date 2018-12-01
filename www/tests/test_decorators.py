@@ -1,3 +1,5 @@
+from tester import assertRaises
+
 def makebold(fn):
     def wrapped():
         return "<b>" + fn() + "</b>"
@@ -66,5 +68,32 @@ assert function_decorated_function() ==2, 'Function fails decorating function'
 assert class_decorated_function() == 3, 'Class fails decorating function'
 assert function_decorated_class().v == 9, 'Function fails decorating class'
 assert class_decorated_class().v == 7, 'Class fails decorating class'
+
+# decorate a function declared global inside another function
+def deco(func):
+    def wrapper(*args, **kw):
+        return func(*args, **kw)
+    return wrapper
+
+def f():
+    global g
+    @deco
+    def g():
+        return 1
+
+f()
+assert g() == 1
+
+# issue 805 : decorator expressions are not arbitrary expressions
+wrong_decs = ["@f[x]", "@f().a"]
+body = "def g(): pass"
+for wrong_dec in wrong_decs:
+    try:
+        exec(wrong_dec + "\n" + body)
+        raise Exception("should have raised SyntaxError")
+    except SyntaxError:
+        pass
+    except:
+        raise Exception("should have raised SyntaxError")
 
 print('passed all tests..')

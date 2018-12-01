@@ -37,10 +37,10 @@ class ToDir:
 
 instanceToDir = ToDir()
 
-dictToDir=({k: getattr(instanceToDir,k) 
+dictToDir=({k: getattr(instanceToDir,k)
     for k in dir(instanceToDir) if '__' not in k})
 
-castdictToDir={str(k): getattr(instanceToDir,k) 
+castdictToDir={str(k): getattr(instanceToDir,k)
     for k in dir(instanceToDir) if '__' not in k}
 
 
@@ -62,21 +62,6 @@ def foo():
         res.append(bar())
     return res
 assert foo() == [0, 1, 2, 3, 4]
-
-# issues 62, 63 and 64
-import test_sp
-
-s = 'a = 3'
-exec(s, test_sp.__dict__)
-assert test_sp.a == 3
-del test_sp.__dict__['a']
-try:
-    test_sp.a
-    raise ValueError('should have raised AttributeError')
-except AttributeError:
-    pass
-except:
-    raise ValueError('should have raised AttributeError')
 
 # issue 82 : Ellipsis literal (...) missing
 def f():
@@ -187,17 +172,13 @@ assert recur() == 1
 
 #issue 131
 import time
-import datetime
+
 target = time.struct_time([1970, 1, 1, 0, 0, 0, 3, 1, 0])
 assert time.gmtime(0).args == target.args
 target = time.struct_time([1970, 1, 1, 0, 1, 40, 3, 1, 0])
 assert time.gmtime(100).args == target.args
 target = time.struct_time([2001, 9, 9, 1, 46, 40, 6, 252, 0])
 assert time.gmtime(1000000000).args == target.args
-target1 = datetime.datetime(1969, 12, 31, 12, 0)
-target2 = datetime.datetime(1970, 1, 1, 12, 0)
-## depending on timezone this could be any hour near midnight Jan 1st, 1970
-assert target1 <= datetime.datetime.fromtimestamp(0) <= target2
 
 try:
     time.asctime(1)
@@ -280,7 +261,7 @@ assert repr(type(None)) == "<class 'NoneType'>"
 
 # nonlocal
 def f():
-    def g(): 
+    def g():
         nonlocal t
         return t
     t = 1
@@ -354,25 +335,6 @@ ModuleType=type(sys)
 foo=ModuleType("foo", "foodoc")
 assert foo.__name__=="foo"
 assert foo.__doc__=="foodoc"
-#assert type(foo.__dict__) == dict
-
-# issue 183
-x=4
-cd=dict(globals())
-cd.update(locals())
-exec("x=x+4",cd)
-
-assert x == 4
-assert cd['x'] == 8
-
-y=5
-yd=dict(globals())
-yd.update(locals())
-co=compile("y=y+4","","exec")
-exec(co,yd)
-
-assert yd['y'] == 9
-assert y == 5
 
 # issue 201
 import json
@@ -420,7 +382,7 @@ class Cmp:
 
     def __eq__(self, other):
         return self.arg == other
-        
+
 a=Cmp(1)
 b=Cmp(1)
 
@@ -508,10 +470,11 @@ assert [4,0,4].index(4,1) == 2
 #issue 297
 assert type((1,)*2) == tuple
 
-t = 1,2
+t = 1, 2
 try:
-    t[0]=1
-except TypeError:
+    t[0] = 1
+    raise Exception('should have raised AttributeError')
+except AttributeError:
     pass
 
 # issue 298
@@ -519,16 +482,9 @@ n = 1
 for n in range(n): pass
 assert n == 0
 
-#issue 301 
+#issue 301
 t = 1,2
-assertRaises(TypeError, t.__setitem__, 0, 1)
-
-try:
-    t[0]=1
-except TypeError:
-    pass
-else:
-    raise Exception('should have raised TypeError')
+assertRaises(AttributeError, getattr, t, "__setitem__")
 
 # issue 303
 assert "{0:.{1}f}".format(1.123,1) == "1.1"
@@ -646,10 +602,10 @@ except SystemError as ie:
     assert str(ie)=="Parent module '' not loaded, cannot perform relative import"
 
 # issue 343
-a76gf = 0   
+a76gf = 0
 
 def f():
-    a76gf = 1   
+    a76gf = 1
     def g():
         nonlocal a76gf
         a76gf=a76gf+1
@@ -659,7 +615,7 @@ f()
 
 # issue 344
 def f():
-    a2fx = 1   
+    a2fx = 1
     def g():
         nonlocal a2fx
         a2fx = 2
@@ -705,7 +661,7 @@ assert C().foo() == 42
 
 # issue 348
 x, y = y, x = 2, 3
-assert x, y == 3, 2
+assert x, y == (3, 2)
 
 # issue 350
 a = float("-inf")
@@ -736,17 +692,6 @@ FULL_ENGLISH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 FULL_ENTEAN_ALPHABET =  "AZYXEWVTISRLPNOMQKJHUGFDCB"
 tran_tab = str.maketrans(FULL_ENGLISH_ALPHABET, FULL_ENTEAN_ALPHABET, 'sh')
 assert "PETEshelley".translate(tran_tab) == "MEHEelley"
-
-# issue 364
-class A(list):
-    def __init__(self, x):
-        list.__init__(self, x)
-
-z = A([1,2,3])
-assert isinstance(z, A)
-assert z == [1, 2, 3]
-assert len(z) == 3
-assert list.__len__(z) == 3
 
 # issue 363
 a = float('nan')
@@ -813,6 +758,9 @@ eval = A()
 
 assert [c for c in range(10) if eval.b[c] == 0] == [3]
 
+# restore original "eval"
+eval = __builtins__.eval
+
 # issue 394
 import base64
 b = b"\x7F\x7B\xED\x96"
@@ -860,13 +808,23 @@ test.__doc__ = "new text"
 assert test.__doc__ == "new text"
 
 # issue 433
-assert 10**1j == (-0.6682015101903132+0.743980336957493j)
-assert 10.5**(3+1j) == (-814.610144261598+822.4998197514079j)
 
+# Once pull request 494 is integrated we should
+# use `math.isclose` instead of `my_isclose`
+# Floats should not test for equality !
 import math
-assert math.e**1j == (0.5403023058681398+0.8414709848078965j)
+def my_isclose(a, b, rel_tol=1e-09, abs_tol=1e-09):
+    if a == b:
+        return True
+    diff = abs(a-b)
+    return diff <= abs(a)*rel_tol or diff <= abs(b)*rel_tol or diff <= abs_tol
 
-assert (1+2j)**1j == (0.2291401859804338+0.23817011512167555j)
+assert my_isclose(10**1j, (-0.6682015101903132+0.7439803369574931j))
+assert my_isclose(10.5**(3+1j), (-814.610144261598+822.4998197514079j))
+
+assert my_isclose(math.e**1j, (0.5403023058681398+0.8414709848078965j))
+
+assert my_isclose((1+2j)**1j, (0.2291401859804338+0.23817011512167555j))
 
 # issue 434
 import collections
@@ -874,6 +832,21 @@ Set = collections.defaultdict(lambda: None)
 Set[0]
 Set[int]
 Set[str]
+
+# issue 443
+class Pepe:
+    def __getitem__(self, arg):
+        return arg
+
+pepe = Pepe()
+
+assert pepe[0:1] == slice(0, 1)
+
+assert pepe[1,0,0:10:2] == (1, 0, slice(0, 10, 2))
+assert pepe[0, 0:10:1] == (0, slice(0, 10, 1))
+assert pepe[0,0] == (0, 0)
+assert pepe[0,:] == (0, slice(None, None, None))
+assert pepe[0,1,1,1,2,3,4,:] == (0, 1, 1, 1, 2, 3, 4, slice(None, None, None))
 
 # issue 448
 d = { 0 : [1] }
@@ -903,6 +876,1289 @@ assert not {0, 1, 2}.issuperset([2, 3])
 
 assert {0, 1}.issubset(range(3))
 assert not {7, 8}.issubset([6, 7])
+
+# issue 465
+class A:
+    def __init__(self, value):
+        self.value = value
+    def __enter__(self):
+        return self
+    def __exit__(self, *args):
+        pass
+    def __str__(self):
+        return str(self.value)
+a = A(1)
+with a as x:
+    assert str(x) == "1"
+
+with A(2) as x:
+    assert str(x) == "2"
+
+with A(3):
+    pass
+
+# ternary is an expression
+a = eval('1 if 3 == 4 else 0')
+assert a == 0
+
+# issue 480
+
+def test(throw=True):
+    pass
+
+test(throw=False)
+
+# issue 485
+class Test:
+    pass
+
+a = Test()
+b = Test()
+d = {a:1,b:2}
+
+assert d[a] == 1
+assert d[b] == 2
+
+# issue 481
+flag = False
+
+def extend_instance(obj, cls):
+    """
+        Apply mixins to a class instance after creation
+        (thanks http://stackoverflow.com/questions/8544983/dynamically-mixin-a-base-class-to-an-instance-in-python)
+    """
+
+    base_cls = obj.__class__
+    base_cls_name = obj.__class__.__name__
+    obj.__class__ = type("Extended"+base_cls_name, (cls,base_cls),{})
+
+class Mixin(object):
+    def __setattr__(self, name, value):
+        if not name.startswith('_'):
+            #print("Mixin setting", name, "to", value, super().__setattr__)
+            super().__setattr__(name,value)
+        else:
+            super().__setattr__(name,value)
+
+class Test:
+    def __init__(self):
+        self._dct={}
+
+    def __setattr__(self,name,value):
+        global flag
+        if not name.startswith('_'):
+            self._dct[name]=value
+            #print("Test setting", name, "to", value)
+            flag = True
+        else:
+            super().__setattr__(name,value)
+    def __getattr__(self):
+        if not name.startswith('_'):
+            return self._dct[name]
+        else:
+            return getattr(self,name)
+
+t=Test()
+extend_instance(t,Mixin)
+t.c=20
+assert flag
+
+# bug in comprehensions
+a = [1, 2]
+b = [3, 4]
+odd = [x for x in a+b if x%2]
+assert odd == [1, 3]
+
+# Bug in generators (GitHub Issue #502)
+
+def test_gen():
+    for i in range(1):
+        yield i
+    return 20
+
+g = test_gen()
+next(g)
+try:
+    next(g)
+except StopIteration as exc:
+    assert exc.value == 20
+
+
+# Bug in round (GitHub Issue #506)
+
+class TestRound:
+    def __round__(self, n=None):
+        if n is None:
+            return 10
+        else:
+            return n
+tr = TestRound()
+
+
+assert type(round(3.0)) == int, "Round called without second argument should return int"
+assert type(round(3.1111, 3)) == float, "Round called without second argument should return same type as first arg"
+assert type(round(3.0, 0)) == float, "Round called without second argument should return same type as first arg"
+assert round(3.1111, 3) == 3.111
+assert type(round(0, 3)) == int, "Round called without second argument should return same type as first arg"
+assert round(tr, 3) == 3, "Round called on obj with __round__ method should use it"
+assert round(tr) == 10, "Round called on obj with __round__ method should use it"
+
+# Bankers rounding (issue #513)
+assert round(-9.5) == -10
+assert round(-0.5) == 0
+assert round(2.5) == 2
+assert round(9.5) == 10
+assert round(100.5) == 100
+
+# issue 523
+borders_distance = [(-5, 0), (4, 0), (0, -3), (0, 4)]
+mx, my = min(borders_distance, key=lambda m: abs(m[0] + m[1]))
+assert (mx, my) == (0, -3)
+
+# issue 500
+order = []
+try:
+    order.append('try')
+except KeyError as exc:
+    order.append('except')
+else:
+    order.append('else')
+finally:
+    order.append('finally')
+
+assert order == ['try', 'else', 'finally']
+
+# issue 529
+x = [-644475]
+assert "{:,}".format(int(x[0])) == "-644,475"
+
+# issue 542
+def test(*args):
+    return args
+
+a01 = [0, 1]
+
+assert test(*a01, 2, 3) == (0, 1, 2, 3)
+
+args = a01 + [2, 3]
+assert test(*args) == (0, 1, 2, 3)
+
+def test(**kw):
+    return kw
+
+d1 = {'x': 2}
+d2 = {'y': 3}
+assert test(u=1, **d1, **d2) == {'u': 1, 'x': 2, 'y': 3}
+
+# issue 545
+k = 3
+nb = 0
+for k in range(k):
+    nb += 1
+assert nb == 3
+
+# issue 547
+a = (1,)
+b = a
+a += (2,)
+assert b == (1,)
+
+# issue 549
+a = 5.0
+a **= 2
+assert a == 25.0
+a //= 25
+assert a == 1.0
+
+# issue 550
+assert True & False is False
+assert True | False is True
+assert True ^ False is True
+
+# issue 551
+y=-1;
+assert y == -1
+
+# issue 553
+sxz = 'abc'
+assert [sxz for sxz in sxz] == ['a', 'b', 'c']
+assert {sxz for sxz in sxz} == {'a', 'b', 'c'}
+assert {sxz:sxz for sxz in sxz} == {'a': 'a', 'b': 'b', 'c': 'c'}
+g = (sxz for sxz in sxz)
+assert list(g) == ['a', 'b', 'c']
+
+# issue 554
+nbcalls = 0
+def f():
+    global nbcalls
+    nbcalls += 1
+
+def g(unused_arg=f()):
+    pass
+
+assert nbcalls == 1
+
+# issue 499
+data = [1, 2, 3]
+data = (item for item in data)
+assert list(data) == [1, 2, 3]
+
+# issue 557
+from math import sin, log
+
+class N:
+    def __float__(self):
+        return 42.0
+
+num = N()
+assert sin(num) == -0.9165215479156338
+assert log(num) == 3.7376696182833684
+
+# issue 558
+a = set([5, 10])
+b = set(a)
+a.difference_update([5])
+assert a == {10}
+assert b == {5, 10}
+
+# issue 560
+class Base:
+    @classmethod
+    def test(cls):
+        return cls
+
+class Derived(Base):
+    def __init__(self):
+        pass
+
+assert Derived.test() == Derived
+d = Derived()
+assert d.test() == Derived
+
+# issue 563
+assert str(False + False) == '0'
+assert False + True == 1
+assert True + True == 2
+
+# Issue 572: Sort should be stable
+words = ["Bed", "Axe", "Cat", "Court", "Axle", "Beer"]
+words.sort()
+words.sort(key=len, reverse=True)
+
+assert words == ['Court', 'Axle', 'Beer', 'Axe', 'Bed', 'Cat']
+
+
+# chained comparisons
+x = 0
+
+def impure():
+  global x
+  x += 1
+  return x
+
+assert 0 < impure() <= 1
+
+# issue 576
+class Patched:
+    def method(self, first="patched1", second="patched2"):
+        return(first, second)
+
+
+class Patcher:
+    def __init__(self):
+        Patched.method = self.method  # monkey patches with instantiated method
+    def method(self, first="patcher1", second="patcher2"):
+        return(first, second)
+
+Patched.method = Patcher.method  # monkey patches with non instantiated method
+assert ("tester1", "patcher2") == Patched().method("tester1")
+Patcher()
+assert ("tester1", "patcher2") == Patched().method("tester1"), "instead returns %s %s" % Patched().method()
+
+# issue 578
+
+try:
+    raise 1
+except TypeError:
+    pass
+
+class A:
+    pass
+
+try:
+    raise A()
+except TypeError:
+    pass
+
+def test():
+    return IOError()
+
+try:
+    raise test()
+except IOError:
+    pass
+
+# issue 582
+def nothing():
+    a = lambda: 1 \
+        or 2
+    return a()
+
+assert nothing() == 1
+
+# issue 584
+try:
+    from __future__ import non_existing_feature
+except SyntaxError:
+    pass
+
+# issue 501
+class Test:
+    def __iter__(self):
+        self._blocking = True
+        yield self
+
+def test_yield():
+    b = yield from Test()
+    return b
+
+test = []
+for b in test_yield():
+    test.append(b)
+
+assert test[0]._blocking is True
+
+# issue 588
+def yoba(a, b):
+    return a + b
+assertRaises(TypeError, yoba, 1, 2, 3)
+
+# issue 592
+assert pow(97, 1351, 723) == 385
+
+# issue 595
+assert float(True) == 1.0
+
+# issue 598
+class A(object):
+    __slots__ = "attr"
+    def __init__(self, attr=0):
+        self.attr  = attr
+a = A()
+
+# issue 600
+class A:
+    def __eq__(self, other):
+        return True
+
+class B(A):
+    def __eq__(self, other):
+        return False
+
+# check that B.__eq__ is used because B is a subclass of A
+assert A() != B()
+a = A()
+b = B()
+assert a != b
+assert b != a
+
+# issue 601
+assert {1:1}.keys() == {1}
+assert {1} == {1:1}.keys()
+assert {1:1}.items() == {(1,1)}
+assert {1:2}.values() == {2}
+
+# issue 602
+d = {} #should crash with mutation in for loop dict error
+d[1] = 1
+try:
+    for i in d:
+        d[i+1] = 1
+    raise Exception('should fail')
+except RuntimeError:
+    pass
+
+# issue 603
+import copy
+a = [[1],2,3]
+b = copy.copy(a)
+b[0] += [10]
+assert a == [[1, 10], 2, 3]
+assert b == [[1, 10], 2, 3]
+
+# issue 604
+class StopCompares:
+    def __eq__(self, other):
+        return 1/0
+
+checkfirst = list([1, StopCompares()])
+assert(1 in checkfirst)
+
+# issue 614
+from collections import namedtuple
+N = namedtuple('N', 'spam, length, eggs')
+n = N(5, 6, 7)
+assert n.length == 6
+
+M = namedtuple('M', 'a, b, c')
+m = M(5, 6, 7)
+try:
+    m.length
+    raise AssertionError("should have raised AttributeError")
+except AttributeError:
+    pass
+
+# issue 615
+class A:
+    spam = 5
+
+try:
+    a = A(5)
+    raise AssertionError("should have raised TypeError")
+except TypeError:
+    pass
+
+try:
+    class A(spam="foo"):
+        pass
+    raise AssertionError("should have raised TypeError")
+except TypeError:
+    pass
+
+# issue 619
+import sys
+from browser.html import H2
+
+
+class _ElementMixIn:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sargs = []
+        self._kargs = {}
+
+    def mytest(self):
+        self._sargs.append(5)
+
+    def mytest2(self):
+        self._kargs[5] = '5'
+
+kls = type('h2', (_ElementMixIn, H2,), {})
+
+x = kls()
+x.mytest()
+assert x._sargs == [5]
+x.mytest2()
+assert x._kargs[5] == '5'
+
+# issue 649
+class test:
+    def test(self):
+        return 1
+assert test().test() == 1
+
+# issue 658
+kk = [i for i in [
+        1,  # 1st quadrant
+        2
+]]
+assert kk == [1, 2]
+
+kk = (i for i in [
+        1, # a comment
+        2
+])
+assert list(kk) == [1, 2]
+
+# issue 663
+a = {}
+a[5] = b = 0
+assert a[5] == 0
+
+# issue 659
+class A:
+    def x(self):
+        pass
+
+assert A().x.__name__ == "x"
+assert A.x.__name__ == "x"
+
+# issue 669
+assert 0.1 is 0.1
+assert not(1 is 1.0)
+
+# issue 673
+class A:
+    __z = 7
+    def __init__(self):
+        self.__x = 20
+
+a = A()
+assert a._A__x == 20
+assert a._A__z == 7
+
+
+class Mapping:
+    def __init__(self, iterable):
+        self.items_list = []
+        self.__update(iterable)
+
+    def update(self, iterable):
+        for item in iterable:
+            self.items_list.append(item)
+
+    __update = update   # private copy of original update() method
+
+class MappingSubclass(Mapping):
+
+    def update(self, keys, values):
+        # provides new signature for update()
+        # but does not break __init__()
+        for item in zip(keys, values):
+            self.items_list.append(item)
+
+mapping = Mapping(range(3))
+mapping.update(range(7, 10))
+assert mapping.items_list == [0, 1, 2, 7, 8, 9]
+
+map2 = MappingSubclass(range(3))
+map2.update(['a', 'b'], [8, 9])
+assert map2.items_list == [0, 1, 2, ('a', 8), ('b', 9)]
+
+class B:
+    def __print(self, name):
+        return name
+
+assert B()._B__print('ok') == 'ok'
+
+# issue 680
+class A:
+    def __getattribute__(self, name):
+        return super().__getattribute__(name)
+
+    def test(self):
+        return 'test !'
+
+assert A().test() == "test !"
+
+# issue 681
+found = [x for x in ['a','b','c']
+                     if x and not x.startswith('-')][-1]
+assert found == 'c'
+
+assert [0, 1][-1] == 1
+assert {-1: 'a'}[-1] == 'a'
+
+# issue 691
+class C(object): pass
+c1 = C()
+c1.x = 42
+assert c1.__dict__['x'] == 42
+c1.__dict__.clear()
+assert c1.__dict__ == {}
+
+class C(object): pass
+c2 = C()
+c2.x = 42
+c2.__dict__ = dict()
+assert c2.__dict__ == {}
+
+try:
+    c2.__dict__ = 6
+except TypeError:
+    pass
+
+# issue 699
+def members(obj):
+    for m in dir(obj):
+        getattr(obj, m)
+
+members(int)
+
+class Foo:
+    def foo(self):
+        pass
+
+members(Foo)
+
+# issue 701
+assert type( (1,2,3)[:0] ) == tuple
+assert type( (1,2,3)[1:2:-1] ) == tuple
+assert type( (1,2,3)[0:2] ) == tuple
+
+# generalised unpacking for function calls
+def f(*args, **kw):
+    return args, kw
+
+res = f(3, *[1, 8], 5, y=2, **{'a': 0}, **{'z': 3})
+assert res[0] == (3, 1, 8, 5)
+assert res[1] == {'y': 2, 'a': 0, 'z': 3}
+
+# issue 702
+def f():
+    return
+
+try:
+    f > 5
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+try:
+    min <= 'a'
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+import random
+try:
+    random.random < 1
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+class A:
+    pass
+
+try:
+    A < 'x'
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+# issue 729
+head, *tail = 1, 2, 3
+assert tail == [2, 3]
+
+# issue 731
+from random import randrange
+assert set([randrange(1, 4, 1) for i in range(100)]) == set([1, 2, 3])
+assert set([randrange(1, 4, 2) for i in range(100)]) == set([1, 3])
+assert set([randrange(0, 4, 2) for i in range(100)]) == set([0, 2])
+assert set([randrange(0, 5, 2) for i in range(100)]) == set([0, 2, 4])
+assert set([randrange(1, 4, 3) for i in range(100)]) == set([1])
+assert set([randrange(0, 4, 3) for i in range(100)]) == set([0, 3])
+assert set([randrange(0, 5, 3) for i in range(100)]) == set([0, 3])
+assert set([randrange(0, 6, 3) for i in range(100)]) == set([0, 3])
+assert set([randrange(0, 7, 3) for i in range(100)]) == set([0, 3, 6])
+assert set([randrange(1, 4, 3) for i in range(100)]) == set([1])
+assert set([randrange(1, 5, 3) for i in range(100)]) == set([1, 4])
+assert set([randrange(1, 6, 3) for i in range(100)]) == set([1, 4])
+assert set([randrange(1, 7, 3) for i in range(100)]) == set([1, 4])
+assert set([randrange(1, 8, 3) for i in range(100)]) == set([1, 4, 7])
+
+
+# issue 743
+def test(msg = 'a', e_type: int = 10):
+    pass
+
+# issue 744: Javascript objects should allow integer attribute names.
+from browser import window
+a = window.Uint8ClampedArray.new(10)
+
+for i in range(10):
+    a[i] = i
+    assert a[i] == i
+
+# issue 749
+assert float.__eq__(1.5, 1.5)
+assert float.__eq__(1.0, 1)
+assert not float.__eq__(1, 0)
+assert int.__eq__(1, 1)
+assert not int.__eq__(1, 0)
+
+# issue 751
+class Z: pass
+
+try:
+    (10, Z()) <= (10, Z())
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+try:
+    a = [100, 100, 100, 100, 100, 70, 100, 100, 70, 70, 100,
+     70, 70, 70, 100, 70, 70, 100, 70, 70, 70, 70, 100, 70,
+     70, 70, 70, 70, 100, 70, 70, 70, 100, 70, 70, 70, 70,
+     70, 70, 100]
+    b = [(v, Z()) for v in a]
+    sorted(b, reverse=True)
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+# Issue 753
+# This array trips over a bug in the sorting library that we use:
+#    see https://github.com/mziccard/node-timsort/issues/14
+a = [1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 0.5, 0.5, 1.0,
+     0.5, 0.5, 0.5, 1.0, 0.5, 0.5, 0.5, 0.5, 1.0, 0.5,
+     0.5, 0.5, 0.5, 0.5, 1.0, 0.5, 1.0, 0.5, 0.5, 0.5,
+     0.6, 1.0]
+
+a.sort()
+for i in range(len(a) - 1):
+    assert a[i] <= a[i+1]
+
+
+# issue 755
+assert '{}'.format(int) == "<class 'int'>"
+
+class C:
+    pass
+
+assert '{}'.format(C) == "<class '__main__.C'>"
+
+import javascript
+assert javascript.jsobj2pyobj(javascript.NULL) is None
+undef = javascript.jsobj2pyobj(javascript.UNDEFINED)
+assert not undef
+
+
+# issue 760
+class A(object):
+   def __str__(self):
+       return "an A"
+
+class B(A):
+    def __repr__(self):
+       return '<B>()'
+
+b = B()
+assert str(b) == "an A"
+
+# issue 761
+class A:
+    def __str__(self):
+        return 'an A'
+
+assert '{0}'.format(A()) == 'an A'
+
+# issue 765
+def sub_gen(expect):
+    res = yield None
+    assert res == expect, "Value should be sent to the inner generator"
+    return res
+
+def main_gen(expect):
+    r = yield from sub_gen(expect)
+    assert r == expect, "Value returned from the inner generator should be result of yield from expression"
+    return r
+
+expect_value = 30
+g = main_gen(expect_value)
+assert g.send(None) is None
+try:
+    g.send(expect_value)
+    assert False, "Return from iterator should send StopIteration"
+except StopIteration as e:
+    assert e.value == expect_value
+
+# issue 776
+def f():
+    d = {
+        a: b
+        for k in keys
+        if k not in (
+            "name",
+        )  # comment
+    }
+
+# issue 778
+import os
+try:
+    os.listdir()
+    raise Exception("should have raised NotImplementedError")
+except NotImplementedError:
+    pass
+
+# issue 780
+def g():
+    print(xtr) # should crash, of course
+
+def f():
+    xtr = 42
+    g()
+
+assertRaises(NameError, f)
+
+# issue 781
+
+# can't call strings
+assertRaises(TypeError, 'a')
+assertRaises(TypeError, 'a', 1)
+assertRaises(TypeError, 'a', {'x': 1})
+
+# can't call lists
+t = [1, 2]
+assertRaises(TypeError, t)
+assertRaises(TypeError, t, 1)
+assertRaises(TypeError, t, {'x': 1})
+
+# can't call dicts
+d = {1: 'a'}
+assertRaises(TypeError,d)
+assertRaises(TypeError, d, 1)
+assertRaises(TypeError, d, {'x': 1})
+
+# issue 782
+class Greetings:
+    default = None
+
+    def hello(self):
+        return "Hello!"
+
+_func_body = """\
+def {name}():
+    if {obj} is None:
+        {obj} = {init}
+    return {obj}.{name}()
+"""
+
+def_str = _func_body.format(obj='Greetings.default',
+    init='Greetings()', name="hello")
+exec(def_str, globals())
+
+assert hello() == "Hello!"
+
+# issue 801
+
+
+class L:
+    def __init__(self):
+        self._called = 0
+
+    def get_list(self):
+        self._called += 1
+        return [0]
+
+l = L()
+
+for i in l.get_list():
+    pass
+
+assert l._called == 1
+
+# issue 808
+class A:
+  pass
+
+class B(object):
+    def __init__(self, *args, **kwargs):
+        self.res = None
+
+    def __setattr__(self, *args, **kwargs):
+        res = None
+        if len(args) == 2 and hasattr(self, args[0]):
+            old = getattr(self, args[0])
+            new = args[1]
+            res = super(B, self).__setattr__(*args, **kwargs)
+        else:
+            res = super(B, self).__setattr__(*args, **kwargs)
+        return res
+
+class C(B,A):
+  pass
+
+c = C()
+
+# issue 794
+assert (-1024).to_bytes(2, "big", signed=True) == b'\xfc\x00'
+assert (1024).to_bytes(2, "big") == b'\x04\x00'
+assert (1024).to_bytes(2, "little") == b'\x00\x04'
+
+"""
+import ipaddress
+assert repr(ipaddress.ip_address('192.168.0.1')) == "IPv4Address('192.168.0.1')"
+assert repr(ipaddress.ip_address('2001:db8::')) == "IPv6Address('2001:db8::')"
+"""
+# issue 811
+try:
+    exec("a + b = 1")
+    raise Exception("should have raised SyntaxError")
+except SyntaxError:
+    pass
+
+# issue 813
+class A:
+    def __radd__(self, other):
+        return 99
+
+    def __rmul__(self, other):
+        return 100
+
+assert [5] + A() == 99
+assert [6] * A() == 100
+
+# issue reported on the Google Group
+# https://groups.google.com/forum/?fromgroups=#!topic/brython/U6cmUP9Q6Y8
+class ndarray:
+  def __getitem__(self, val):
+    return val
+
+t = ndarray()
+
+assert slice(1, 5, None) == slice(1, 5, None)
+assert t[1:5, 7] == (slice(1, 5, None), 7)
+
+# test attribute __code__.co_code of functions
+def f():
+    print(10)
+
+assert f.__code__.co_code.startswith("function f")
+
+
+# Regression introduced in 6888c6d67b3d5b44905a09fa427a84bef2c7b304
+class A:
+    pass
+
+global_x = None
+def target(x=None):
+    global global_x
+    global_x = x
+
+obj_dict = A().__dict__
+obj_dict['target_key'] = target
+obj_dict['target_key'](x='hello')
+
+assert global_x == 'hello'
+
+# issue 823
+x = 5
+s = "Distance {}km".format(x)
+assert s == "Distance 5km"
+
+x = 5.1
+s = "Distance {}km".format(x)
+assert s == "Distance 5.1km"
+
+# issue 835
+x = 0
+class A:
+    assert x == 0
+    def x(self):
+        pass
+    assert callable(x)
+
+# issue 836
+def f():
+    if False:
+        wxc = 0
+    else:
+        print(wxc)
+
+assertRaises(UnboundLocalError, f)
+
+def g():
+    if False:
+        vbn = 0
+    print(vbn)
+
+assertRaises(UnboundLocalError, f)
+
+# issue 838
+import sys
+import random
+assert type(random) == type(sys)
+
+# issue 843
+import sys
+
+try:
+    raise FileNotFoundError()
+except FloatingPointError:
+    assert False
+except FileNotFoundError:
+    assert sys.exc_info()[0] == FileNotFoundError
+
+
+# Test exception raising with and without parens for
+# custom and builtin exception types
+class CustomException(Exception):
+    pass
+
+try:
+    raise Exception()
+except Exception:
+    pass
+
+try:
+    raise Exception
+except Exception:
+    pass
+
+try:
+    raise CustomException()
+except CustomException:
+    pass
+
+try:
+    raise CustomException
+except CustomException:
+    pass
+
+# Make sure that accessing tb.tb_next doesn't lead to an infinite loop
+try:
+    raise Exception()
+except:
+    (_, _, tb) = sys.exc_info()
+    while tb:
+        tb = tb.tb_next
+
+
+# PEP 448
+assert dict(**{'x': 1}, y=2, **{'z': 3}) == {"x": 1, "y": 2, "z": 3}
+try:
+    d = dict(**{'x': 1}, y=2, **{'z': 3, 'x': 9})
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
+
+r = range(2)
+t = *r, *range(2), 4
+assert t == (0, 1, 0, 1, 4)
+
+t = [*range(4), 4]
+assert t == [0, 1, 2, 3, 4]
+
+assert {*range(4), 4} == {0, 1, 2, 3, 4}
+assert {*[0, 1], 2} == {0, 1, 2}
+assert {*(0, 1), 2} == {0, 1, 2}
+assert {4, *t} == {0, 1, 2, 3, 4}
+
+assert {'x': 1, **{'y': 2, 'z': 3}} == {'x': 1, 'y': 2, 'z': 3}
+
+assert {'x': 1, **{'x': 2}} == {'x': 2}
+assert {**{'x': 2}, 'x': 1} == {'x': 1}
+
+assertRaises(SyntaxError, exec, "d = {'x': 1, *[1]}")
+assertRaises(SyntaxError, exec, "d = {'x', **{'y': 1}}")
+assertRaises(SyntaxError, exec, "d = {*[1], 'x': 2}")
+assertRaises(SyntaxError, exec, "d = {**{'x': 1}, 2}")
+assertRaises(SyntaxError, exec, "t = *range(4)")
+
+# issue 909
+t1 = [*[1]]
+assert t1 == [1]
+t2 = [*(1, 2)]
+assert t2 == [1, 2]
+
+# issue 854
+class A(object):
+
+    def __init__(self):
+        self.x = 0
+
+    def f():
+        pass
+
+class B(A): pass
+
+assert 'f' in dir(A)
+assert 'f' in dir(B)
+
+assert 'x' in dir(A())
+assert 'x' in dir(B())
+
+# issue 869
+class A(object):
+    def __init__(self):
+        self.value = 0
+
+    def __iadd__(self, val):
+        self.value += val
+        return self.value
+
+class B(object):
+    def __init__(self):
+        self.a = A()
+
+b = B()
+b.a += 10
+assert b.a == 10
+
+# issue 873
+str(globals())
+
+# issue 883
+for _ in range(2):
+    for _ in range(2):
+        pass
+
+# issue 900
+"".format(**globals())
+
+# issue 901 : _jsre's SRE_Pattern lacking methods: .sub(), .subn(), .split(), and .fullmatch()
+import _jsre as re
+
+regex = re.compile('a|b')
+
+# These methods work!
+assert regex.match('ab') is not None
+assert regex.search(' ab') is not None
+assert regex.findall('ab') == ['a', 'b']
+
+def switch(m):
+    return 'a' if m.group(0) == 'b' else 'b'
+
+# Missing: .sub()
+assert regex.sub(switch, 'ba') == 'ab'
+
+# Missing: .fullmatch()
+# assert regex.fullmatch('b') is not None
+
+# Missing: .split()
+#assert regex.split('cacbca', maxsplit=2) == ['c', 'c', 'ca']
+
+# Missing: .subn()
+#assert regex.subn(switch, 'ba') == ('ab', 2)
+
+# Broken: .finditer()
+#assert [m.group(0) for m in regex.finditer('ab')] == ['a', 'b']
+
+# issue 918
+import copy
+
+class MyClass:
+    def __init__(self, some_param):
+        self.x = some_param
+
+obj = MyClass("aaa")
+obj2 = copy.copy(obj)
+assert obj2.x == "aaa"
+
+# issue 923
+v = 1
+del v
+try:
+    print(v)
+    raise Exception("should have raised NameError")
+except NameError:
+    pass
+
+# issue 925
+class A():
+    def __lt__(self, other):
+        return 1
+    def __gt__(self, other):
+        return 2
+
+assert (1 < A()) == 2
+assert (A() < 1) == 1
+
+# issue 936
+assert not (2 == "2")
+assert 2 != "2"
+assert not ("2" == 2)
+assert "2" != 2
+
+try:
+    2 <= "2"
+except TypeError as exc:
+    assert "<=" in exc.args[0]
+
+# issue 939
+class A:
+    def __bool__(self):
+        raise TypeError("Not a bool!")
+
+try:
+    if A():
+        pass
+    raise Exception("should have raised TypeError")
+except TypeError as exc:
+    assert exc.args[0] == "Not a bool!"
+
+try:
+    bool(A())
+    raise Exception("should have raised TypeError")
+except TypeError as exc:
+    assert exc.args[0] == "Not a bool!"
+
+# issue 940
+assertRaises(SyntaxError, lambda: exec('a.foo = x += 3', {'a': A(), 'x': 10}))
+assertRaises(SyntaxError, lambda: exec('x = a.foo += 3', {'a': A(), 'x': 10}))
+
+# issue 944
+src = """def f():
+    pass
+f():
+"""
+try:
+    exec(src)
+    raise Exception("should have raised SyntaxError")
+except SyntaxError:
+    pass
+
+# issue 948
+try:
+    exec("a = +25, b = 25")
+    raise Exception("should have raised SyntaxError")
+except SyntaxError as exc:
+    assert exc.args[0] == "can't assign to operator"
+
+# issue 949
+class A(object):
+
+    def __getattr__(self, name):
+        return 'A-%s' % name
+
+try:
+    A.foo
+    raise Exception("should have raised AttributeError")
+except AttributeError:
+    pass
+
+# issue 951
+class A(object):
+        pass
+
+a = A()
+a.__dict__['_x'] = {1: 2}
+a._x[3] = 4
+assert len(a._x) == 2
+
+# issue 952
+try:
+    exec("x += 1, y = 2")
+    raise Exception("should have raised SyntaxError")
+except SyntaxError as exc:
+    assert exc.args[0] == "invalid syntax"
+
+# issue 953
+adk = 4
+def f():
+    if False:
+        adk = 1
+    else:
+        print(adk)
+
+assertRaises(UnboundLocalError, f)
+
+# issue 959
+try:
+    exec("x + x += 10")
+    raise Exception("should have raised SyntaxError")
+except SyntaxError as exc:
+    assert exc.args[0] == "can't assign to operator"
+
+# issue 965
+assertRaises(SyntaxError, exec, "if:x=2")
+assertRaises(SyntaxError, exec, "while:x=2")
+assertRaises(SyntaxError, exec, "for x in:x")
+
+# issue 973
+try:
+    exec("x = 400 - a, y = 400 - b")
+    raise Exception("should have raised SyntaxError")
+except SyntaxError as exc:
+    assert exc.args[0] == "can't assign to operator"
+
+# issue 975
+l = [1, 2, 3]
+try:
+    l[:,:]
+    raise Exception("should have raised TypeError")
+except TypeError:
+    pass
 
 # ==========================================
 # Finally, report that all tests have passed

@@ -21,12 +21,20 @@ class ref:
     def __call__(self):
         return self.obj.obj
 
+    def __hash__(self):
+        return hash(self.obj.obj)
+
+    def __eq__(self, other):
+        return self.obj.obj == other.obj.obj
+
 def getweakrefcount(obj):
     return 1
 
 def getweakrefs(obj):
     return obj
 
+def _remove_dead_weakref(*args):
+    pass
 
 def proxy(obj,callback=None):
     return ProxyType(obj)

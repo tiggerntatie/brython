@@ -24,6 +24,20 @@ x = 'str' 'ing'
 assert x=='string'
 assert 'str'.strip() + 'ing'=='string'
 
+assert ' str '.strip() == 'str'
+assert ' str '.rstrip() == ' str'
+assert ' str '.lstrip() == 'str '
+
+assert "\t\n str\t\n ".strip() == 'str'
+assert "\t\n str\t\n ".rstrip() == '\t\n str'
+assert "\t\n str\t\n ".lstrip() == 'str\t\n '
+
+# GH Issue 521: handle brackets (and other special characters) correctly
+assert '[str]'.rstrip(']') == '[str'
+assert '[str]'.lstrip('[') == 'str]'
+assert '[-^str-]'.strip('[^a-b]') == 'str'
+assert '[-^str-]'.strip('^a-b') == '[-^str-]'
+
 # string methods
 x='fooss'
 assert x.replace('o','X',20) == 'fXXss'
@@ -128,5 +142,47 @@ assert not "x$".isidentifier()
 assert "André".isidentifier()
 assert "안녕하세요".isidentifier()
 assert not "1x".isidentifier()
+
+# issue 740
+s = "ess\N{LATIN CAPITAL LETTER A}i"
+assert s == "essAi"
+
+# repr() of escaped characters
+
+assert repr("a\ab") == "'a\\x07b'"
+assert repr("a\bb") == "'a\\x08b'"
+assert repr("a\fb") == "'a\\x0cb'"
+assert repr("a\nb") == "'a\\nb'"
+assert repr("a\rb") == "'a\\rb'"
+assert repr("a\tb") == "'a\\tb'"
+assert repr("a\\b") == "'a\\\\b'"
+
+# unicode-escape encoding
+# https://groups.google.com/forum/?fromgroups=#!topic/brython/jI66k55_zSk
+import codecs
+
+d = codecs.decode("Hello,\\nworld!", "unicode-escape")
+assert d == "Hello,\nworld!"
+
+d = codecs.decode("Hello,\\tworld!", "unicode-escape")
+assert d == "Hello,\tworld!"
+
+d = codecs.decode("Hello,\\bworld!", "unicode-escape")
+assert d == "Hello,\bworld!"
+
+d = codecs.decode("Hello,\\'world!", "unicode-escape")
+assert d == "Hello,'world!"
+d = codecs.decode('Hello,\\"world!', "unicode-escape")
+assert d == 'Hello,"world!'
+
+
+s = bytes("Hello,\\nworld!", "utf-8").decode("unicode-escape")
+assert s == "Hello,\nworld!"
+
+s = bytes("Hello,\\tworld!", "utf-8").decode("unicode-escape")
+assert s == "Hello,\tworld!"
+
+s = bytes("Hello,\\bworld!", "utf-8").decode("unicode-escape")
+assert s == "Hello,\bworld!"
 
 print("passed all tests...")

@@ -10,13 +10,14 @@ Solución
 Brython proporciona un módulo llamado `browser.local_storage` que permite 
 almacenar cadenas de valores asociados a cadenas de claves
 
-<input id="zone" value="Local Storage">
-
 ### Almacenar valor
+
+<input id="zone" value="Local Storage">
 
 ```exec
 from browser import document
 from browser.local_storage import storage
+
 storage['brython_test'] = document['zone'].value
 ```
 
@@ -24,6 +25,8 @@ storage['brython_test'] = document['zone'].value
 
 ```exec
 from browser import alert
+from browser.local_storage import storage
+
 alert(storage['brython_test'])
 ```
 

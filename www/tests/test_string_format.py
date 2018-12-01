@@ -36,6 +36,15 @@ assert '{: f}; {: f}'.format(3.14, -3.14)  == ' 3.140000; -3.140000'
 # show only the minus -- same as '{:f}; {:f}'
 assert '{:-f}; {:-f}'.format(3.14, -3.14)  == '3.140000; -3.140000'
 
+# issue #850: str.format doesn't show sign for integer positive numbers when requested
+# show sign always
+assert '{:+}; {:+}; {:+}'.format(1, 0, -1)  == '+1; +0; -1'
+# show a space for positive numbers
+assert '{: }; {: }; {: }'.format(1, 0, -1)  == ' 1;  0; -1'
+# show only the minus -- same as '{:d}; {:d}'
+assert '{:-}; {:-}; {:-}'.format(1, 0, -1)  == '1; 0; -1'
+
+
 # format also supports binary numbers
 assert "int: {0:d};  hex: {0:x};  oct: {0:o};  bin: {0:b}".format(42) == 'int: 42;  hex: 2a;  oct: 52;  bin: 101010'
 # with 0x, 0o, or 0b as prefix:
@@ -54,15 +63,12 @@ assert "The year is {}".format(2010) == 'The year is 2010'
 #brython fix me
 #assert "{0:{width}.{precision}s}".format('hello world', width=8, precision=5) == 'hello   '
 
-import datetime
-d = datetime.date(2010, 9, 7)
 
-assert "The year is {0.year}".format(d) == "The year is 2010"
-assert "Tested on {0:%Y-%m-%d}".format(d) == "Tested on 2010-09-07"
-
-import datetime
-d = datetime.datetime(2010, 7, 4, 12, 15, 58)
-assert '{:%Y-%m-%d %H:%M:%S}'.format(d) == '2010-07-04 12:15:58'
+# format objects
+class A:
+    def __str__(self):
+        return 'an A'
+assert '{}'.format(A()) == 'an A'
 
 ########################
 ## OLD STYLE FORMAT   ##
@@ -216,7 +222,7 @@ assert int(x, 16) == 3232235521
 
 width = 5
 results = []
-for num in range(5,12): 
+for num in range(5,12):
     line = []
     for base in 'dXob':
         line.append('{0:{width}{base}}'.format(num, base=base, width=width))

@@ -1,165 +1,132 @@
 # -*- coding: utf-8 -*-
 
-
+import ast
 import json
 import os
 import re
 
-import javascript_minifier
 import python_minifier
+import git
 
-try:
-    import io as StringIO
-except ImportError:
-    import cStringIO as StringIO  # lint:ok
+class Visitor(ast.NodeVisitor):
+    """Used to list all the modules imported by a script."""
 
+    def __init__(self, lib_path, package):
+        self.imports = set()
+        self.lib_path = lib_path
+        self.package = package
 
-###############################################################################
+    def visit_Import(self, node):
+        for alias in node.names:
+            self.imports.add(alias.name)
 
-def process_unittest(filename):
-    """Process a VFS filename for Brython."""
-    print("Generating {}".format(filename))
-    nb = 0
-    nb_err = 0
-    _main_root = os.path.dirname(filename)
-    _VFS = {}
-    for _mydir in ("Lib",):
-        for _root, _dir, _files in os.walk(os.path.join(_main_root, _mydir)):
-            if 'unittest' not in _root:
-               if 'test' not in _root:
-                  continue
-
-            if '__pycache__' in _root:
-               continue
-
-            for _file in _files:
-                _ext = os.path.splitext(_file)[1]
-                if _ext not in ('.py'):
-                    continue
-                nb += 1
-
-                file_name = os.path.join(_root, _file)
-                encoding = "utf-8"
-                try:
-                    src = open(file_name, encoding=encoding).read()
-                except:
-                    encoding = "iso-8859-1"
-                    src = open(file_name, encoding=encoding).read()
-
-                if _ext.lower() == '.py':
-                    try:
-                        _data = python_minifier.minify(src)
-                    except Exception as error:
-                        print(error)
-                        nb_err += 1
-
-                _vfs_filename = os.path.join(_root, _file).replace(_main_root, '')
-                _vfs_filename = _vfs_filename.replace("\\", "/")
-
-                mod_name = _vfs_filename[len(_mydir) + 2:].replace('/', '.')
-                mod_name, ext = os.path.splitext(mod_name)
-                is_package = mod_name.endswith('__init__')
-                if is_package:
-                    mod_name = mod_name[:-9]
-                    _VFS[mod_name] = [_data, 1]
-                else:
-                    _VFS[mod_name] = [_data]
-                print(("Adding %s %s" % (mod_name, _vfs_filename)))
-    print('%s files, %s errors' % (nb, nb_err))
-
-    with open(filename, "w") as file_to_write_VFS:
-        file_to_write_VFS.write('__BRYTHON__.libs = __BRYTHON__.libs || {};\n')
-        file_to_write_VFS.write("__BRYTHON__.=libs['unittest']=%s;\n\n" % json.dumps(_VFS))
-
-        file_to_write_VFS.write("""
-  __BRYTHON__.import_from_unittest function(mod_name){
-  var stored = __BRYTHON__.libs['unittest'][mod_name]
-  if(stored!==undefined){
-    var module_contents = stored[0]
-    var $is_package = stored[1]
-    var path = 'py_unittest'
-    var module = {name:mod_name,__class__:$B.$ModuleDict,$is_package:$is_package}
-    if($is_package){var package=mod_name}
-    else{
-      var elts = mod_name.split('.')
-      elts.pop()
-      var package = elts.join('.')
-    }
-    $B.modules[mod_name].$package = $is_package
-    $B.modules[mod_name].__package__ = package
-
-    run_py(module,path,module_contents)
-    return true
-  }
-  return null
-}
-// add this import function to brython by doing the following:
-// <body onload="brython({custom_import_funcs:[__BRYTHON__.import_from_unittest]})">
-// this will allow us to import unittest modules.
-""")
-
-
-def process(filename, exclude_dirs=['unittest','test','site-packages']):
-    """Process a VFS filename for Brython."""
-    print("Generating {}".format(filename))
-    nb = 0
-    nb_err = 0
-    _main_root = os.path.dirname(filename)
-    _VFS = {}
-    for _mydir in ("libs", "Lib"):
-        for _root, _dir, _files in os.walk(os.path.join(_main_root, _mydir)):
-            #if _root.endswith('lib_migration'):
-            _flag=False
-            for _exclude in exclude_dirs:
-                if _exclude in _root: #_root.endswith(_exclude):
-                   _flag=True
-                   continue
-            if _flag:
-               continue  # skip these modules
-            if '__pycache__' in _root:
+    def visit_ImportFrom(self, node):
+        if node.level > 0:
+            package = self.package[:]
+            level = node.level - 1
+            while level:
+                package.pop()
+                level -= 1
+            module = ".".join(package)
+            if node.module:
+                module += "." + node.module
+        else:
+            module = node.module
+        self.imports.add(module)
+        for alias in node.names:
+            if alias.name == "*":
                 continue
+            else:
+                # Only keep "from X import Y" if X.Y is a module, not if Y
+                # is a variable defined in X
+                path = os.path.join(self.lib_path, *module.split("."),
+                    alias.name + ".py")
+                if os.path.exists(path):
+                    self.imports.add(module + "." + alias.name)
+
+def process(filename, exclude_dirs=['test','site-packages']):
+    """Process a VFS filename for Brython."""
+    print("Generating {}".format(filename))
+    nb = 0
+    nb_err = 0
+    main_root = os.path.dirname(filename)
+    VFS = {}
+    for stdlib_dir in ("libs", "Lib"):
+        lib_path = os.path.join(main_root, stdlib_dir)
+        for root, _dir, files in os.walk(lib_path):
+            flag = False
+            root_elts = root.split(os.sep)
+            for exclude in exclude_dirs:
+                if exclude in root_elts:
+                   flag = True
+                   continue
+            if flag:
+               continue  # skip these modules
+            if '__pycache__' in _dir:
+                _dir.remove("__pycache__")
             nb += 1
 
-            for _file in _files:
-                _ext = os.path.splitext(_file)[1]
-                if _ext not in ('.js', '.py'):
+            if stdlib_dir == "Lib":
+                if root == lib_path:
+                    package = []
+                else:
+                    package = root[len(lib_path) + 1:].split(os.sep)
+
+            for _file in files:
+                ext = os.path.splitext(_file)[1]
+                if ext not in ('.js', '.py'):
                     continue
                 if re.match(r'^module\d+\..*$', _file):
                     continue
+                if not git.in_index(_file):
+                    continue
                 nb += 1
 
-                file_name = os.path.join(_root, _file)
-                _data = open(file_name, encoding='utf-8').read()
-            
-                if _ext == '.py':
-                   _data = python_minifier.minify(_data, preserve_lines=True)
+                file_name = os.path.join(root, _file)
+                with open(file_name, encoding='utf-8') as f:
+                    data = f.read()
 
-                _vfs_filename = os.path.join(_root, _file).replace(_main_root, '')
-                _vfs_filename = _vfs_filename.replace("\\", "/")
+                if ext == '.py':
+                    data = python_minifier.minify(data, preserve_lines=True)
+                    path_elts = package[:]
+                    if os.path.basename(filename) != "__init__.py":
+                        path_elts.append(os.path.basename(file_name)[:-3])
+                    fqname = ".".join(path_elts)
+                    with open(os.path.join(root, file_name), encoding="utf-8") as f:
+                        tree = ast.parse(f.read())
+                        visitor = Visitor(lib_path, package)
+                        visitor.visit(tree)
+                        imports = sorted(list(visitor.imports))
 
-                if _vfs_filename.startswith('/libs/crypto_js/rollups/'):
+                vfs_path = os.path.join(root, _file).replace(main_root, '')
+                vfs_path = vfs_path.replace("\\", "/")
+
+                if vfs_path.startswith('/libs/crypto_js/rollups/'):
                    if _file not in ('md5.js', 'sha1.js', 'sha3.js',
-                                'sha224.js', 'sha384.js', 'sha512.js'):
+                                'sha224.js', 'sha256.js', 'sha384.js',
+                                'sha512.js'):
                       continue
 
-                mod_name = _vfs_filename[len(_mydir) + 2:].replace('/', '.')
+                mod_name = vfs_path[len(stdlib_dir) + 2:].replace('/', '.')
                 mod_name, ext = os.path.splitext(mod_name)
                 is_package = mod_name.endswith('__init__')
-                if is_package:
-                   mod_name = mod_name[:-9]
-                   _VFS[mod_name] = [ext, _data, 1]
+                if ext == ".py":
+                    if is_package:
+                       mod_name = mod_name[:-9]
+                       VFS[mod_name] = [ext, data, imports, 1]
+                    else:
+                        VFS[mod_name] = [ext, data, imports]
                 else:
-                   _VFS[mod_name] = [ext, _data]
-                print(("adding %s %s" % (mod_name, _vfs_filename)))
-    print('%s files, %s errors' % (nb, nb_err))
-    with open(filename, "w") as file_to_write_VFS:
-      file_to_write_VFS.write('__BRYTHON__.use_VFS = true;\n')
-      file_to_write_VFS.write('__BRYTHON__.VFS=%s;\n\n' % json.dumps(_VFS))
+                   VFS[mod_name] = [ext, data]
+                print("adding {}".format(mod_name))
 
+    print('{} files, {} errors'.format(nb, nb_err))
+    with open(filename, "w") as out:
+      out.write('__BRYTHON__.use_VFS = true;\n')
+      out.write('__BRYTHON__.VFS={}\n\n'.format(json.dumps(VFS)))
 
-###############################################################################
 
 
 if __name__ == '__main__':
-    _main_root = os.path.join(os.path.dirname(os.getcwd()), 'www', 'src')
-    process(os.path.join(_main_root, "py_VFS.js"))
+    main_root = os.path.join(os.path.dirname(os.getcwd()), 'www', 'src')
+    process(os.path.join(main_root, "py_VFS.js"))

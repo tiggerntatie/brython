@@ -25,30 +25,32 @@ All Rights Reserved."""
 _license = """Copyright (c) 2012, Pierre Quentel pierre.quentel@gmail.com
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer. Redistributions in binary 
-form must reproduce the above copyright notice, this list of conditions and 
-the following disclaimer in the documentation and/or other materials provided 
+list of conditions and the following disclaimer. Redistributions in binary
+form must reproduce the above copyright notice, this list of conditions and
+the following disclaimer in the documentation and/or other materials provided
 with the distribution.
-Neither the name of the <ORGANIZATION> nor the names of its contributors may 
-be used to endorse or promote products derived from this software without 
+Neither the name of the <ORGANIZATION> nor the names of its contributors may
+be used to endorse or promote products derived from this software without
 specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 """
+
+CODE_ELT = doc['code']
 
 def credits():
     print(_credits)
@@ -62,11 +64,43 @@ def license():
     print(_license)
 license.__repr__ = lambda:_license
 
-def write(data):
-    doc['code'].value += str(data)
+class Trace:
 
+    def __init__(self):
+        self.buf = ""
+
+    def write(self, data):
+        self.buf += str(data)
+
+    def format(self):
+        """Remove calls to function in this script from the traceback."""
+        lines = self.buf.split("\n")
+        stripped = [lines[0]]
+        for i in range(1, len(lines), 2):
+            if __file__ in lines[i]:
+                continue
+            stripped += lines[i: i+2]
+        return "\n".join(stripped)
+
+def print_tb():
+    trace = Trace()
+    traceback.print_exc(file=trace)
+    CODE_ELT.value += trace.format()
+
+OUT_BUFFER = ''
+
+def write(data):
+    global OUT_BUFFER
+    OUT_BUFFER += str(data)
+
+def flush():
+    global CODE_ELT, OUT_BUFFER
+    CODE_ELT.value += OUT_BUFFER
+    OUT_BUFFER = ''
 
 sys.stdout.write = sys.stderr.write = write
+sys.stdout.__len__ = sys.stderr.__len__ = lambda: len(OUT_BUFFER)
+
 history = []
 current = 0
 _status = "main"  # or "block" if typing inside a block
@@ -75,7 +109,7 @@ _status = "main"  # or "block" if typing inside a block
 editor_ns = {'credits':credits,
     'copyright':copyright,
     'license':license,
-    '__name__':'__main__'}  
+    '__name__':'__main__'}
 
 def cursorToEnd(*args):
     pos = len(doc['code'].value)
@@ -89,7 +123,6 @@ def get_col(area):
     for line in lines[:-1]:
         sel -= len(line) + 1
     return sel
-
 
 def myKeyPress(event):
     global _status, current
@@ -115,8 +148,10 @@ def myKeyPress(event):
         if _status == "main" or _status == "3string":
             try:
                 _ = editor_ns['_'] = eval(currentLine, editor_ns)
+                flush()
                 if _ is not None:
                     write(repr(_)+'\n')
+                flush()
                 doc['code'].value += '>>> '
                 _status = "main"
             except IndentationError:
@@ -131,18 +166,27 @@ def myKeyPress(event):
                     try:
                         exec(currentLine, editor_ns)
                     except:
-                        traceback.print_exc()
+                        print_tb()
+                    flush()
                     doc['code'].value += '>>> '
                     _status = "main"
                 elif str(msg) == 'decorator expects function':
                     doc['code'].value += '... '
                     _status = "block"
                 else:
-                    traceback.print_exc()
+                    info, filename, lineno, offset, line = msg.args
+                    print(f"  File <stdin>, line {lineno}")
+                    print("    " + line)
+                    print("    " + offset * " " + "^")
+                    print("SyntaxError:", info)
+                    flush()
                     doc['code'].value += '>>> '
                     _status = "main"
             except:
-                traceback.print_exc()
+                # the full traceback includes the call to eval(); to
+                # remove it, it is stored in a buffer and the 2nd and 3rd
+                # lines are removed
+                print_tb()
                 doc['code'].value += '>>> '
                 _status = "main"
         elif currentLine == "":  # end of block
@@ -156,11 +200,12 @@ def myKeyPress(event):
                 if _ is not None:
                     print(repr(_))
             except:
-                traceback.print_exc()
+                print_tb()
+            flush()
             doc['code'].value += '>>> '
         else:
             doc['code'].value += '... '
-        
+
         cursorToEnd()
         event.preventDefault()
 

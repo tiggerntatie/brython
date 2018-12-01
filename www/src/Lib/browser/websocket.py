@@ -1,10 +1,11 @@
 from browser import window
-import javascript
 
 if hasattr(window, 'WebSocket'):
     supported = True
-    WebSocket = javascript.JSConstructor(window.WebSocket)
+    WebSocket = window.WebSocket.new
 else:
     supported = False
-    def WebSocket(*args,**kw):
-        raise NotImplementedError
+
+    class WebSocket:
+        def __init__(self, *args):
+            raise NotImplementedError

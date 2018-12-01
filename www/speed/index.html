@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -14,11 +14,11 @@
 
 <script type="text/javascript" src="../../src/brython_builtins.js"></script>
 <script type="text/javascript" src="../../src/version_info.js"></script>
-<script type="text/javascript" src="../../src/identifiers_re.js"></script>
 <script type="text/javascript" src="../../src/py2js.js"></script>
 <script type="text/javascript" src="../../src/py_object.js"></script>
 <script type="text/javascript" src="../../src/py_type.js"></script>
 <script type="text/javascript" src="../../src/py_utils.js"></script>
+<script type="text/javascript" src="../../src/py_sort.js"></script>
 <script type="text/javascript" src="../../src/py_builtin_functions.js"></script>
 <script type="text/javascript" src="../../src/py_exceptions.js"></script>
 <script type="text/javascript" src="../../src/py_range_slice.js"></script>
@@ -27,7 +27,7 @@
 <script type="text/javascript" src="../../src/js_objects.js"></script>
 <script type="text/javascript" src="../../src/stdlib_paths.js"></script>
 <script type="text/javascript" src="../../src/py_import.js"></script>
-
+<script type="text/javascript" src="../../src/unicode.min.js"></script>
 <script type="text/javascript" src="../../src/py_string.js"></script>
 <script type="text/javascript" src="../../src/py_int.js"></script>
 <script type="text/javascript" src="../../src/py_long_int.js"></script>
@@ -40,12 +40,14 @@
 
 <script type="text/javascript" src="../../src/builtin_modules.js"></script>
 <script type="text/javascript" src="../../src/py_import_hooks.js"></script>
-<!-- script type="text/javascript" src="../src/async.js"></script -->
+<script type="text/javascript" src="../src/async.js"></script>
 
 <script type="text/python3">
-from browser import document as doc
+from browser import document as doc, window
 from browser import timer
+from browser.html import *
 import time
+import sys
 
 import editor
 
@@ -61,6 +63,8 @@ def set_debug(ev):
 
 __BRYTHON__.debug = int(doc['set_debug'].checked)
 
+results = []
+
 def test_next():
     global script_num,failed
     script_num += 1
@@ -70,7 +74,9 @@ def test_next():
         src = open(option.value).read()
         doc['files'].selectedIndex = script_num
         editor.editor.setValue(src)
-        state = editor.run()
+        state, result = editor.run()
+        result['test'] = option.value
+        results.append(result)
         if state == 0:
             failed.append(option.text)
         timer.set_timeout(test_next,500)
@@ -78,12 +84,35 @@ def test_next():
         doc['console'].value = ''
         print('completed all tests in %.2f s' %(time.time()-t_start))
         print('failed : %s' %failed)
-    
+
+        w = window.open()
+
+        head = w.document.get(selector="head")
+        head[0] <= STYLE("*{font-family: Arial;}")
+
+        body = w.document.body
+        table = TABLE(border=1)
+        table <= TR(TH('test')+TH('Brython'))
+        print(results)
+        for result in results:
+            row = TR()
+            row <= TD(result['test'])
+            if "Brython" in result and "CPython" in result:
+                row <= TD(int(100*float(result['Brython'])/float(result['CPython'])),
+                    align="right")
+            else:
+                row <= TD("missing result")
+            table <= row
+        version = '.'.join(str(x) for x in __BRYTHON__.implementation[:3])
+        body <= H1("Brython {} performance (base 100 = CPython)".format(version))
+        body <= table
+
 def test_all(ev):
-    global script_num,failed,t_start
+    global script_num, failed, t_start, results
     script_num = -1
     t_start = time.time()
     failed = []
+    results = []
     test_next()
 
 def set_debug(ev):
@@ -102,7 +131,8 @@ doc['set_debug'].bind('change',set_debug)
 
 # next functions are defined in editor.py
 doc['show_js'].bind('click',editor.show_js)
-doc['run'].bind('click',editor.run)
+# Create a lambda around editor.run() so that the event object is not passed to it
+doc['run'].bind('click',lambda *args: editor.run())
 doc['show_console'].bind('click',editor.show_console)
 doc['files'].bind('change',editor.load_script)
 </script>
@@ -110,7 +140,7 @@ doc['files'].bind('change',editor.load_script)
 from browser import document
 import header
 
-qs_lang,language = header.show('../')
+qs_lang,language = header.show()
 
 # other translations
 
@@ -134,7 +164,7 @@ for key in trans:
 
 <table id=banner cellpadding=0 cellspacing=0>
 <tr id=banner_row >
-<td class="logo"><a href="../index.html"><img src="../brython.png" class="logo"></a></td>
+<td class="logo"><a href="../index.html"><img src="../brython_tp.png" class="logo"></a></td>
 </tr>
 </table>
 
@@ -156,6 +186,7 @@ Test suite:
     <option value="benchmarks/build_dict.py">build dictionary</option>
     <option value="benchmarks/add_dict.py">build dictionary 2</option>
     <option value="benchmarks/set_dict_item.py">set dictionary item</option>
+    <option value="benchmarks/build_set.py">build set</option>
     <option value="benchmarks/build_list.py">build list</option>
     <option value="benchmarks/set_list_item.py">set list item</option>
     <option value="benchmarks/add_integers.py">integer addition</option>
@@ -170,6 +201,7 @@ Test suite:
     <option value="benchmarks/create_class_with_init.py">create class with init</option>
     <option value="benchmarks/create_instance_simple_class.py">create instance of simple class</option>
     <option value="benchmarks/create_instance_with_init.py">create instance of class with init</option>
+    <option value="benchmarks/call_instance_method.py">call instance method</option>
     <!--
     <option value="benchmarks/pystone.py">pystone</option>
     <option value="benchmarks/bm_ai.py">bm_ai (n-queens)</option>

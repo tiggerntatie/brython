@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <title>Brython</title>
 <link rel="stylesheet" href="../doc/doc_brython.css">
+<link rel="stylesheet" type="text/css"
+      href="https://fonts.googleapis.com/css?family=Montserrat">
 <link rel="stylesheet" href="console.css">
 
 <script type="text/javascript" src="../src/brython_builtins.js"></script>
@@ -12,6 +14,7 @@
 <script type="text/javascript" src="../src/py_object.js"></script>
 <script type="text/javascript" src="../src/py_type.js"></script>
 <script type="text/javascript" src="../src/py_utils.js"></script>
+<script type="text/javascript" src="../src/py_sort.js"></script>
 <script type="text/javascript" src="../src/py_builtin_functions.js"></script>
 <script type="text/javascript" src="../src/py_exceptions.js"></script>
 <script type="text/javascript" src="../src/py_range_slice.js"></script>
@@ -21,6 +24,7 @@
 <script type="text/javascript" src="../src/stdlib_paths.js"></script>
 <script type="text/javascript" src="../src/py_import.js"></script>
 
+<script type="text/javascript" src="../src/unicode.min.js"></script>
 <script type="text/javascript" src="../src/py_string.js"></script>
 <script type="text/javascript" src="../src/py_int.js"></script>
 <script type="text/javascript" src="../src/py_long_int.js"></script>
@@ -35,7 +39,7 @@
 <script type="text/javascript" src="../src/py_import_hooks.js"></script>
 <script type="text/javascript" src="../src/async.js"></script>
 
-<script type="text/javascript" src="../src/py_VFS.js"></script>
+<script type="text/javascript" src="../src/brython_stdlib.js"></script>
 
 <script src="ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="ace/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
@@ -50,7 +54,7 @@ from browser import html
 import header
 import editor
 
-qs_lang,language = header.show('../')
+qs_lang,language = header.show()
 
 # other translations
 
@@ -70,7 +74,7 @@ for key in trans:
 # link to test page
 tplink = doc['test_page']
 if qs_lang:
-    tplink.href += '?lang=%s' %qs_lang
+    tplink.attrs["href"] += '?lang=%s' %qs_lang
 
 def set_debug(ev):
     if ev.target.checked:
@@ -81,12 +85,12 @@ def set_debug(ev):
 __BRYTHON__.debug = int(doc['set_debug'].checked)
 
 # bindings
-doc['run_js'].bind('click', window.run_js)
 doc['set_debug'].bind('change',set_debug)
 
 # next functions are defined in editor.py
 doc['show_js'].bind('click',editor.show_js)
-doc['run'].bind('click',editor.run)
+# Create a lambda around editor.run() so that the event object is not passed to it
+doc['run'].bind('click',lambda *args: editor.run())
 doc['show_console'].bind('click',editor.show_console)
 
 # erase "main" div
@@ -129,11 +133,11 @@ function run_js(){
 }
 </script>
 </head>
-<body onload="brython({debug:1, cache:'version'})">
+<body onload="brython({debug:1})">
 
 <table id=banner cellpadding=0 cellspacing=0>
 <tr id=banner_row >
-<td class="logo"><a href="../index.html"><img src="../brython.png" class="logo"></a></td>
+<td class="logo"><a href="../index.html"><img src="../brython_tp.png" class="logo"></a></td>
 </tr>
 </table>
 
@@ -141,7 +145,6 @@ function run_js(){
 
 <div style="text-align:center">Brython version: <span id="version"></span>
 </div>
-</center>
 
 <div id="container">
 <div id="left-div">
@@ -156,7 +159,6 @@ function run_js(){
 <div style="padding: 3px 3px 3px 3px;">
   <div style="float:left">
     <button id="run"> ▶ Run</button>
-    <button id="run_js"> ▶ Run Javascript</button>
     Debug<input type="checkbox" id="set_debug" checked>
   </div>
 

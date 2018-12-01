@@ -3,23 +3,30 @@
 
 var _b_ = $B.builtins,
     None = _b_.None,
-    $RangeDict = {__class__:$B.$type,
-        __dir__:_b_.object.$dict.__dir__,
-        __name__:'range',
-        $native:true,
-        descriptors:{start:true,step:true,stop:true}
+    range = {
+        __class__: _b_.type,
+        __module__: "builtins",
+        __mro__: [_b_.object],
+        __name__: "range",
+        $is_class: true,
+        $native: true,
+        $descriptors:{
+            start: true,
+            step: true,
+            stop: true
+        }
     }
 
-$RangeDict.__contains__ = function(self,other){
-    if($RangeDict.__len__(self)==0){return false}
+range.__contains__ = function(self,other){
+    if(range.__len__(self) == 0){return false}
     try{other = $B.int_or_bool(other)}
     catch(err){
         // If other is not an integer, test if it is equal to
         // one of the items in range
-        try{$RangeDict.index(self, other); return true}
+        try{range.index(self, other); return true}
         catch(err){return false}
     }
-    
+
     var sub = $B.sub(other, self.start),
         fl = $B.floordiv(sub, self.step),
         res = $B.mul(self.step, fl)
@@ -34,89 +41,92 @@ $RangeDict.__contains__ = function(self,other){
     }
 }
 
-$RangeDict.__delattr__ = function(self, attr, value){
-    throw _b_.AttributeError('readonly attribute')
+range.__delattr__ = function(self, attr, value){
+    throw _b_.AttributeError.$factory("readonly attribute")
 }
 
-$RangeDict.__eq__ = function(self, other){
+range.__eq__ = function(self, other){
     if(_b_.isinstance(other, range)){
-        var len = $RangeDict.__len__(self)
-        if(!$B.eq(len,$RangeDict.__len__(other))){return false}
-        if(len==0){return true}
-        if(!$B.eq(self.start,other.start)){return false}
-        if(len==1){return true}
+        var len = range.__len__(self)
+        if(! $B.eq(len,range.__len__(other))){return false}
+        if(len == 0){return true}
+        if(! $B.eq(self.start,other.start)){return false}
+        if(len == 1){return true}
         return $B.eq(self.step, other.step)
     }
     return false
 }
 
 function compute_item(r, i){
-    var len = $RangeDict.__len__(r)
-    if(len==0){return r.start}
-    else if(i>len){return r.stop}
+    var len = range.__len__(r)
+    if(len == 0){return r.start}
+    else if(i > len){return r.stop}
     return $B.add(r.start, $B.mul(r.step, i))
 }
 
-$RangeDict.__getitem__ = function(self,rank){
+range.__getitem__ = function(self, rank){
     if(_b_.isinstance(rank, _b_.slice)){
-        var norm = _b_.slice.$dict.$conv_for_seq(rank, $RangeDict.__len__(self)),
+        var norm = _b_.slice.$conv_for_seq(rank, range.__len__(self)),
             substep = $B.mul(self.step, norm.step),
             substart = compute_item(self, norm.start),
             substop = compute_item(self, norm.stop)
-        return range(substart, substop, substep)
+        return range.$factory(substart, substop, substep)
     }
     if(typeof rank != "number") {
-      rank=$B.$GetInt(rank)
+      rank = $B.$GetInt(rank)
     }
-    if($B.gt(0, rank)){rank = $B.add(rank, $RangeDict.__len__(self))}
+    if($B.gt(0, rank)){rank = $B.add(rank, range.__len__(self))}
     var res = $B.add(self.start, $B.mul(rank, self.step))
-    if(($B.gt(self.step,0) && ($B.ge(res, self.stop) || $B.gt(self.start, res))) ||
-        ($B.gt(0, self.step) && ($B.ge(self.stop, res) || $B.gt(res, self.start)))){
-            throw _b_.IndexError('range object index out of range')
+    if(($B.gt(self.step, 0) &&
+            ($B.ge(res, self.stop) || $B.gt(self.start, res))) ||
+            ($B.gt(0, self.step) &&
+                ($B.ge(self.stop, res) || $B.gt(res, self.start)))){
+            throw _b_.IndexError.$factory("range object index out of range")
     }
-    return res   
+    return res
 }
 
-$RangeDict.__hash__ = function(self){
-    var len = $RangeDict.__len__(self)
-    if(len==0){return _b_.hash(_b_.tuple([0, None, None]))}
-    if(len==1){return _b_.hash(_b_.tuple([1, self.start, None]))}
-    return _b_.hash(_b_.tuple([len, self.start, self.step]))
+range.__hash__ = function(self){
+    var len = range.__len__(self)
+    if(len == 0){return _b_.hash(_b_.tuple.$factory([0, None, None]))}
+    if(len == 1){return _b_.hash(_b_.tuple.$factory([1, self.start, None]))}
+    return _b_.hash(_b_.tuple.$factory([len, self.start, self.step]))
 }
 
-$RangeIterator = function(obj){
-    return {__class__:$RangeIterator.$dict, obj: obj}
-}
-$RangeIterator.__class__ = $B.$factory
-$RangeIterator.$dict = {
-    __class__: $B.$type,
-    __name__: 'range_iterator',
-    $factory: $RangeIterator,
-    
+var RangeIterator = {
+    __class__: _b_.type,
+    __mro__: [_b_.object],
+    __name__: "range_iterator",
+
     __iter__: function(self){return self},
-    
+
     __next__: function(self){return _b_.next(self.obj)}
 }
-$RangeIterator.$dict.__mro__ = [$RangeIterator.$dict, _b_.object.$dict]
 
-$RangeDict.__iter__ = function(self){
+RangeIterator.$factory = function(obj){
+    return {__class__: RangeIterator, obj: obj}
+}
+
+$B.set_func_names(RangeIterator, "builtins")
+
+range.__iter__ = function(self){
     var res = {
-        __class__ : $RangeDict,
-        start:self.start,
-        stop:self.stop,
-        step:self.step
+        __class__ : range,
+        start: self.start,
+        stop: self.stop,
+        step: self.step
     }
     if(self.$safe){
-        res.$counter = self.start-self.step
+        res.$counter = self.start - self.step
     }else{
         res.$counter = $B.sub(self.start, self.step)
     }
-    return $RangeIterator(res)
+    return RangeIterator.$factory(res)
 }
 
-$RangeDict.__len__ = function(self){
+range.__len__ = function(self){
     var len
-    if($B.gt(self.step,0)){
+    if($B.gt(self.step, 0)){
         if($B.ge(self.start, self.stop)){return 0}
         // len is 1+(self.stop-self.start-1)/self.step
         var n = $B.sub(self.stop, $B.add(1, self.start)),
@@ -128,66 +138,60 @@ $RangeDict.__len__ = function(self){
             q = $B.floordiv(n, $B.mul(-1, self.step))
         len = $B.add(1, q)
     }
-    //if($B.gt(len, $B.maxsise)){throw _b_.OverflowError("range len too big")}
-    if($B.maxsize===undefined){
-        $B.maxsize = $B.LongInt.$dict.__pow__($B.LongInt(2), 63)
-        $B.maxsize = $B.LongInt.$dict.__sub__($B.maxsize, 1)
+    if($B.maxsize === undefined){
+        $B.maxsize = $B.long_int.__pow__($B.long_int.$factory(2), 63)
+        $B.maxsize = $B.long_int.__sub__($B.maxsize, 1)
     }
     return len
 }
 
-$RangeDict.__next__ = function(self){
+range.__next__ = function(self){
     if(self.$safe){
         self.$counter += self.step
-        if((self.step>0 && self.$counter >= self.stop)
-            || (self.step<0 && self.$counter <= self.stop)){
-                throw _b_.StopIteration('')
+        if((self.step > 0 && self.$counter >= self.stop)
+            || (self.step < 0 && self.$counter <= self.stop)){
+                throw _b_.StopIteration.$factory("")
         }
     }else{
         self.$counter = $B.add(self.$counter, self.step)
-        if(($B.gt(self.step,0) && $B.ge(self.$counter, self.stop))
-            || ($B.gt(0, self.step) && $B.ge(self.stop, self.$counter))){
-                throw _b_.StopIteration('')
+        if(($B.gt(self.step, 0) && $B.ge(self.$counter, self.stop))
+                || ($B.gt(0, self.step) && $B.ge(self.stop, self.$counter))){
+            throw _b_.StopIteration.$factory("")
         }
     }
     return self.$counter
 }
 
-$RangeDict.__mro__ = [$RangeDict, _b_.object.$dict]
-
-$RangeDict.__reversed__ = function(self){
-    var n = $B.sub($RangeDict.__len__(self), 1)
-    return range($B.add(self.start, $B.mul(n, self.step)),
-        $B.sub(self.start,self.step),
-        $B.mul(-1,self.step))
+range.__reversed__ = function(self){
+    var n = $B.sub(range.__len__(self), 1)
+    return range.$factory($B.add(self.start, $B.mul(n, self.step)),
+        $B.sub(self.start, self.step),
+        $B.mul(-1, self.step))
 }
 
-$RangeDict.__repr__ = $RangeDict.__str__ = function(self){
-    var res = 'range('+_b_.str(self.start)+', '+_b_.str(self.stop)
-    if(self.step!=1) res += ', '+_b_.str(self.step)
-    return res+')'
+range.__repr__ = range.__str__ = function(self){
+    var res = "range(" + _b_.str.$factory(self.start) + ", " +
+        _b_.str.$factory(self.stop)
+    if(self.step != 1){res += ", " + _b_.str.$factory(self.step)}
+    return res + ")"
 }
 
-$RangeDict.__setattr__ = function(self, attr, value){
-    throw _b_.AttributeError('readonly attribute')
+range.__setattr__ = function(self, attr, value){
+    throw _b_.AttributeError.$factory("readonly attribute")
 }
 
-//$RangeDict.descriptors = {
-    //start: function(self){return self.start},
-    //step: function(self){return self.step},
-    //stop: function(self){return self.stop}
-//}
-$RangeDict.start = function(self){return self.start}
-$RangeDict.step = function(self){return self.step},
-$RangeDict.stop = function(self){return self.stop}
+// range descriptors
+range.start = function(self){return self.start}
+range.step = function(self){return self.step},
+range.stop = function(self){return self.stop}
 
-$RangeDict.count = function(self, ob){
+range.count = function(self, ob){
     if(_b_.isinstance(ob, [_b_.int, _b_.float, _b_.bool])){
-        return _b_.int($RangeDict.__contains__(self, ob))
+        return _b_.int.$factory(range.__contains__(self, ob))
     }else{
-        var comp = _b_.getattr(ob, '__eq__'),
-            it = $RangeDict.__iter__(self)
-            _next = $RangeIterator.$dict.__next__,
+        var comp = function(other){return $B.rich_comp("__eq__", ob, other)},
+            it = range.__iter__(self),
+            _next = RangeIterator.__next__,
             nb = 0
         while(true){
             try{
@@ -202,16 +206,17 @@ $RangeDict.count = function(self, ob){
     }
 }
 
-$RangeDict.index = function(self, other){
-    var $ = $B.args('index', 2, {self:null, other:null},['self','other'],
-        arguments,{},null,null),
-        self=$.self, other=$.other
+range.index = function(self, other){
+    var $ = $B.args("index", 2, {self: null, other: null}, ["self", "other"],
+        arguments, {}, null, null),
+        self = $.self,
+        other = $.other
     try{
         other = $B.int_or_bool(other)
     }catch(err){
-        var comp = _b_.getattr(other, '__eq__'),
-            it = $RangeDict.__iter__(self),
-            _next = $RangeIterator.$dict.__next__,
+        var comp = function(x){return $B.rich_comp("__eq__", other, x)},
+            it = range.__iter__(self),
+            _next = RangeIterator.__next__,
             nb = 0
         while(true){
             try{
@@ -219,7 +224,8 @@ $RangeDict.index = function(self, other){
                 nb++
             }catch(err){
                 if(_b_.isinstance(err, _b_.StopIteration)){
-                    throw _b_.ValueError(_b_.str(other)+' not in range')
+                    throw _b_.ValueError.$factory(_b_.str.$factory(other) +
+                        " not in range")
                 }
                 throw err
             }
@@ -229,25 +235,31 @@ $RangeDict.index = function(self, other){
         fl = $B.floordiv(sub, self.step),
         res = $B.mul(self.step, fl)
     if($B.eq(res, sub)){
-        if(($B.gt(self.stop, self.start) && $B.ge(other, self.start) 
-            && $B.gt(self.stop, other)) ||
-            ($B.ge(self.start, self.stop) && $B.ge(self.start, other) 
-            && $B.gt(other, self.stop))){
-                return fl
-        }else{throw _b_.ValueError(_b_.str(other)+' not in range')}
+        if(($B.gt(self.stop, self.start) && $B.ge(other, self.start)
+                && $B.gt(self.stop, other)) ||
+                ($B.ge(self.start, self.stop) && $B.ge(self.start, other)
+                && $B.gt(other, self.stop))){
+            return fl
+        }else{throw _b_.ValueError.$factory(_b_.str.$factory(other) +
+            ' not in range')}
     }else{
-        throw _b_.ValueError(_b_.str(other)+' not in range')            
+        throw _b_.ValueError.$factory(_b_.str.$factory(other) +
+            " not in range")
     }
 }
 
-function range(){
-    var $=$B.args('range',3,{start:null,stop:null,step:null},
-        ['start','stop','step'],arguments,{stop:null,step:null},null,null),
-        start=$.start,stop=$.stop,step=$.step,safe
-    if(stop===null && step===null){
+range.$factory = function(){
+    var $ = $B.args("range", 3, {start: null, stop: null, step: null},
+        ["start", "stop", "step"],
+        arguments, {stop: null, step: null}, null, null),
+        start = $.start,
+        stop = $.stop,
+        step = $.step,
+        safe
+    if(stop === null && step === null){
         stop = $B.PyNumber_Index(start)
-        safe = typeof stop==="number"
-        return{__class__:$RangeDict,
+        safe = typeof stop === "number"
+        return{__class__: range,
             start: 0,
             stop: stop,
             step: 1,
@@ -255,14 +267,16 @@ function range(){
             $safe: safe
         }
     }
-    if(step===null){step=1}
+    if(step === null){step = 1}
     start = $B.PyNumber_Index(start)
     stop = $B.PyNumber_Index(stop)
     step = $B.PyNumber_Index(step)
-    if(step==0){throw _b_.ValueError("range() arg 3 must not be zero")}
-    safe = (typeof start=='number' && typeof stop=='number' &&
-        typeof step=='number')
-    return {__class__: $RangeDict,
+    if(step == 0){
+        throw _b_.ValueError.$factory("range.$factory() arg 3 must not be zero")
+    }
+    safe = (typeof start == "number" && typeof stop == "number" &&
+        typeof step == "number")
+    return {__class__: range,
         start: start,
         stop: stop,
         step: step,
@@ -270,99 +284,123 @@ function range(){
         $safe: safe
     }
 }
-range.__class__ = $B.$factory
-range.$dict = $RangeDict
-$RangeDict.$factory = range
-range.$is_func = true
+
+$B.set_func_names(range, "builtins")
 
 // slice
-// slice
-var $SliceDict = {__class__:$B.$type, 
-	__name__:'slice', 
-	$native:true,
-	descriptors:{start:true,step:true,stop:true}
-}
-
-$SliceDict.__mro__ = [$SliceDict, _b_.object.$dict]
-
-$SliceDict.__repr__ = $SliceDict.__str__ = function(self){
-        return 'slice('+_b_.str(self.start)+','+
-            _b_.str(self.stop)+','+_b_.str(self.step)+')'
-    }
-
-$SliceDict.__setattr__ = function(self, attr, value){
-    throw _b_.AttributeError('readonly attribute')
-}
-
-$SliceDict.$conv = function(self, len){
-    // Internal method, uses the integer len to set
-    // start, stop, step to integers
-    return {start: self.start === _b_.None ? 0 : self.start,
-        stop: self.stop === _b_.None ? len : self.stop,
-        step: self.step === _b_.None ? 1 : self.step
+var slice = {
+    __class__: _b_.type,
+    __module__: "builtins",
+    __mro__: [_b_.object],
+    __name__: "slice",
+    $is_class: true,
+    $native: true,
+    $descriptors: {
+        start: true,
+        step: true,
+        stop: true
     }
 }
 
-$SliceDict.$conv_for_seq = function(self, len){
+slice.__eq__ = function(self, other){
+    var conv1 = conv_slice(self),
+        conv2 = conv_slice(other)
+    return conv1[0] == conv2[0] &&
+        conv1[1] == conv2[1] &&
+        conv1[2] == conv2[2]
+}
+
+slice.__repr__ = slice.__str__ = function(self){
+    return "slice(" + _b_.str.$factory(self.start) + ", " +
+        _b_.str.$factory(self.stop) + ", " + _b_.str.$factory(self.step) + ")"
+}
+
+slice.__setattr__ = function(self, attr, value){
+    throw _b_.AttributeError.$factory("readonly attribute")
+}
+
+function conv_slice(self){
     // Internal method, uses the integer len to set
     // start, stop, step to integers
-    var step = self.step===None ? 1 : $B.PyNumber_Index(self.step),
+    var attrs = ["start", "stop", "step"],
+        res = []
+    for(var i = 0; i < attrs.length; i++){
+        var val = self[attrs[i]]
+        if(val === _b_.None){
+            res.push(val)
+        }else{
+            try{
+                res.push($B.PyNumber_Index(val))
+            }catch(err){
+                throw _b_.TypeError.$factory("slice indices must be " +
+                    "integers or None or have an __index__ method")
+            }
+        }
+    }
+    return res
+}
+
+slice.$conv_for_seq = function(self, len){
+    // Internal method, uses the integer len to set
+    // start, stop, step to integers
+    var step = self.step === None ? 1 : $B.PyNumber_Index(self.step),
         step_is_neg = $B.gt(0, step),
         len_1 = $B.sub(len, 1)
-    if (step == 0) {
-        throw Error('ValueError : slice step cannot be zero');
+    if(step == 0){
+        throw _b_.ValueError.$factory('slice step cannot be zero')
     }
-    var start, end;
-    if (self.start === None) {
-        start = step_is_neg ? len_1 : 0;
-    } else {
-        start = $B.PyNumber_Index(self.start);
-        if ($B.gt(0, start)) start = $B.add(start, len);
-        if ($B.gt(0, start)) start = step<0 ? -1 : 0
-        if ($B.ge(start, len)) start = step<0 ? len_1 : len;
+    var start
+    if(self.start === None){
+        start = step_is_neg ? len_1 : 0
+    }else{
+        start = $B.PyNumber_Index(self.start)
+        if($B.gt(0, start)){start = $B.add(start, len)}
+        if($B.gt(0, start)){start = step < 0 ? -1 : 0}
+        if($B.ge(start, len)){start = step < 0 ? len_1 : len}
     }
-    if (self.stop === None) {
-        stop = step_is_neg ? -1 : len;
-    } else {
-        stop = $B.PyNumber_Index(self.stop);
-        if ($B.gt(0, stop)) stop += len
-        if ($B.gt(0, stop)) stop = step<0 ? -1 : 0
-        if ($B.ge(stop, len)) stop = step_is_neg ? len_1 : len;
+    if(self.stop === None){
+        stop = step_is_neg ? -1 : len
+    }else{
+        stop = $B.PyNumber_Index(self.stop)
+        if($B.gt(0, stop)){stop += len}
+        if($B.gt(0, stop)){stop = step < 0 ? -1 : 0}
+        if($B.ge(stop, len)){stop = step_is_neg ? len_1 : len}
     }
     return {start: start, stop: stop, step: step}
 }
 
-//$SliceDict.descriptors = {
+//slice.descriptors = {
     //start: function(self){return self.start},
     //step: function(self){return self.step},
     //stop: function(self){return self.stop}
 //}
-$SliceDict.start = function(self){return self.start}
-$SliceDict.step = function(self){return self.step}
-$SliceDict.stop = function(self){return self.stop}
+slice.start = function(self){return self.start}
+slice.step = function(self){return self.step}
+slice.stop = function(self){return self.stop}
 
-$SliceDict.indices = function (self, length) {
-  var len=$B.$GetInt(length)
-  if (len < 0) _b_.ValueError('length should not be negative')
-  if (self.step > 0) {
+slice.indices = function (self, length) {
+  var len = $B.$GetInt(length)
+  if(len < 0){_b_.ValueError.$factory("length should not be negative")}
+  if(self.step > 0) {
      var _len = _b_.min(len, self.stop)
-     return _b_.tuple([self.start, _len, self.step])
-  } else if (self.step == _b_.None) {
-     var _len = _b_.min(len, self.stop)
-     var _start = self.start
-     if (_start == _b_.None) _start = 0
-     return _b_.tuple([_start, _len, 1])
+     return _b_.tuple.$factory([self.start, _len, self.step])
+  }else if(self.step == _b_.None){
+     var _len = _b_.min(len, self.stop),
+         _start = self.start
+     if(_start == _b_.None){_start = 0}
+     return _b_.tuple.$factory([_start, _len, 1])
   }
-  _b_.NotImplementedError("Error! negative step indices not implemented yet")
+  _b_.NotImplementedError.$factory(
+      "Error! negative step indices not implemented yet")
 }
 
-function slice(){
-    var $=$B.args('slice',3,{start:null, stop:null, step:null},
-        ['start', 'stop', 'step'],arguments,{stop:null, step:null},
-        null,null),
+slice.$factory = function(){
+    var $ = $B.args("slice", 3, {start: null, stop: null, step: null},
+        ["start", "stop", "step"], arguments,{stop: null, step: null},
+        null, null),
         start, stop, step
 
-    if($.stop===null && $.step===null){
+    if($.stop === null && $.step === null){
         start = _b_.None
         stop = $.start
         step = _b_.None
@@ -373,17 +411,16 @@ function slice(){
     }
 
     var res = {
-        __class__ : $SliceDict,
-        start:start,
-        stop:stop,
-        step:step
+        __class__ : slice,
+        start: start,
+        stop: stop,
+        step: step
     }
+    conv_slice(res) // to check types
     return res
 }
-slice.__class__ = $B.$factory
-slice.$dict = $SliceDict
-$SliceDict.$factory = slice
-slice.$is_func = true
+
+$B.set_func_names(slice, "builtins")
 
 _b_.range = range
 _b_.slice = slice

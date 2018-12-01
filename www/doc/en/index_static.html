@@ -1,19 +1,21 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <title>Brython documentation</title>
+
+<link rel="stylesheet" type="text/css"
+      href="https://fonts.googleapis.com/css?family=Montserrat">
+
 <link rel="stylesheet" href="<prefix>/doc_brython.css">
 
 <script src="/src/brython.js"></script>
 
 <script type="text/python3">
-from browser import window, document, html
-
-import highlight
+from browser import window, document, html, highlight
 
 import header
-header.show('../<prefix>/', 'en')
+header.show('en')
 
 def run(ev):
     # run the code in the element after the button
@@ -63,7 +65,7 @@ for elt in document[target].get(selector='.python'):
 
 <table id=banner cellpadding=0 cellspacing=0>
 <tr id=banner_row >
-<td class="logo"><a href="../<prefix>/index.html"><img src="/brython.png" class="logo"></a></td>
+<td class="logo"><a href="../<prefix>/index.html"><img src="/brython_tp.png" class="logo"></a></td>
 </tr>
 </table>
 
@@ -71,6 +73,7 @@ for elt in document[target].get(selector='.python'):
 <tr>
 <td style="width:20%;vertical-align:top;">
 <h4><a class="navig" href="intro.html">Introduction</a></h4>
+<h4><a class="navig" href="install.html">Installation</a></h4>
 <h4><a class="navig" href="faq.html">Frequently asked questions</a></h4>
 <h4><a class="navig" href="syntax.html">Syntax, keywords and built-in functions</a></h4>
 <h4><a class="navig" href="stdlib.html">Standard distribution</a></h4>
@@ -104,16 +107,19 @@ for elt in document[target].get(selector='.python'):
 <br><a class="navig" href="object_storage.html">browser.object_storage</a>
 <br><a class="navig" href="local_storage.html">browser.session_storage</a>
 <br><a class="navig" href="svg.html">browser.svg</a>
+<br><a class="navig" href="template.html">browser.template</a>
 <br><a class="navig" href="timer.html">browser.timer</a>
 <br><a class="navig" href="websockets.html">browser.websocket</a>
+<br><a class="navig" href="webworker.html">browser.webworker</a>
 <br>
 <br><a class="navig" href="javascript.html">javascript</a>
+<br><a class="navig" href="asyncio.html">asyncio</a>
+<br><a class="navig" href="asyncfs.html">asyncio.fs</a>
 </div>
 
 <h4>Working with Brython</h4>
 <div style="padding-left:10px;">
 <a class="navig" href="options.html">Options of function <code>brython()</code></a>
-<br><a class="navig" href="dev_env.html">Installing the development environment</a>
 <br><a class="navig" href="test.html">Testing and debugging</a>
 <br><a class="navig" href="deploy.html">Deploying an application</a>
 </div>

@@ -1,17 +1,30 @@
-Deploying a Brython application on a server
--------------------------------------------
+Deploying a Brython application
+-------------------------------
 
-For deployment on a web server accessible to users of your application, you don't have to install all the development environment
+The application can be deployed by uploading the whole directory content on
+the server.
 
-In the [downloads page](https://github.com/brython-dev/brython/releases), choose one of the archives (zip, gz or bz2) called _Brython-YYYYMMDD-HHMMSS_ ; unpack it and upload its content to the directory where you want to install your Brython application
+Since version 3.4.0 it is also possible to deploy a Brython application using
+the same tool as for CPython packages, ie `pip`.
 
-This packages only holds the Brython distribution : __brython.js__ and the built-in libraries in directories __libs__ and __Lib__
+For that, install the CPython Brython package (`pip install brython`),
+open a console window and in the application directory run:
 
-Deploying without installing
-----------------------------
+    python -m brython --make_dist
 
-An even more straightforward solution is to install nothing on the server, but to call all the Python environment from the site brython.info :
+On first execution, the user is asked to enter required information for a
+package : its name, version number, etc. This information is stored in a file
+__brython_setup.json__ that can be edited later.
 
-    <script src="http://brython.info/src/brython_dist.js"></script>
+The command creates a subdirectory __\_\_dist\_\___ ; it includes the script
+__setup.py__ that is used to create a package for the application, and to
+deploy it on the Python Package Index.
 
-The drawback of this method is the relatively important size of the distribution, which includes the standard library
+Users can then install the CPython package by the usual command:
+
+    pip install <nom_application>
+
+and install the Brython application in a directory by:
+
+    python -m <nom_application> --install
+

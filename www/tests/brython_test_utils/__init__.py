@@ -10,18 +10,20 @@ def discover_brython_test_modules():
           ("test_rmethods.py", "reflected methods"),
           ("test_bytes.py", "bytes"),
           ("test_classes.py", "classes"),
-          ("test_decimals.py", "decimals"),
           ("test_decorators.py", "decorators"),
           ("test_descriptors.py", "descriptors"),
           ("test_dict.py", "dicts"),
+          ("test_exec.py", "exec / eval"),
           ("test_import.py", "imports"),
           ("test_iterators.py", "iterators"),
           ("test_generators.py", "generators"),
-          ("test_list_methods.py", "lists"),
+          ("test_list.py", "lists"),
+          ("test_memoryview.py", "memoryview"),
           ("test_numbers.py", "numbers"),
           ("test_print.py", "print"),
           ("test_set.py", "sets"),
           ("test_strings.py", "strings"),
+          ("test_fstrings.py", "f-strings"),
           ("test_string_format.py", "string format"),
           ("test_string_methods.py", "string methods")
         ]),
@@ -34,22 +36,28 @@ def discover_brython_test_modules():
           ("issues.py", "issues")
         ]),
         ("Modules", [
-          ("test_random.py", "random"),
-          ("test_re.py", "re"),
-          ("test_unittest.py", "unittest"),
+          ("test_aio.py", "asyncio"),
           ("test_bisect.py", "bisect"),
           ("test_collections.py", "collections"),
+          ("test_dataclasses.py", "dataclasses"),
           ("test_datetime.py", "datetime"),
+          ("test_decimals.py", "decimals"),
+          ("test_functools.py", "functools"),
           ("test_hashlib.py", "hashlib"),
-          #("test_indexedDB.py", "indexedDB"),
           ("test_itertools.py", "itertools"),
-          ("test_json.py", "JSON"),
+          ("test_json.py", "json"),
           ("test_math.py", "math"),
+          ("test_random.py", "random"),
+          ("test_re.py", "re"),
           ("test_storage.py", "storage"),
-          #("test_time.py", "time"),
+          ("test_struct.py", "struct"),
           ("test_types.py", "types"),
-          ("test_struct.py", "struct")
-        ])]
+          ("test_unittest.py", "unittest"),
+          ("test_urllib.py", "urllib"),
+          #("test_indexedDB.py", "indexedDB"),
+          #("test_time.py", "time"),
+        ])
+    ]
 
 def populate_testmod_input(elem, selected=None):
     """Build a multiple selection control including test modules
